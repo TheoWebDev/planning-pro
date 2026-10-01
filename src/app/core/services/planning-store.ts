@@ -217,7 +217,11 @@ export class PlanningStore {
 
   updateSettings(patch: Partial<PlanningSettings>): void {
     this.state.update((state) => {
-      const settings: PlanningSettings = { ...state.settings, ...patch };
+      const merged: PlanningSettings = { ...state.settings, ...patch };
+      const settings: PlanningSettings =
+        'fuelPricePerLiter' in patch && !('fuelPriceReadAt' in patch)
+          ? { ...merged, fuelPriceReadAt: null }
+          : merged;
       return {
         ...state,
         settings: { ...settings, tollRates: normalizeTollRates(settings.tollRates) },
@@ -428,6 +432,7 @@ function normalizeState(input: unknown): PlanningState {
       readProp(raw.settings, 'fuelPricePerLiter'),
       base.settings.fuelPricePerLiter,
     ),
+    fuelPriceReadAt: readIsoDateTime(readProp(raw.settings, 'fuelPriceReadAt')),
   };
 
   const days: Record<string, DayEntry> = {};
@@ -514,6 +519,13 @@ function optionalNumber(value: unknown): number | undefined {
   return value !== null && value !== undefined && Number.isFinite(parsed) && parsed >= 0
     ? parsed
     : undefined;
+}
+
+function readIsoDateTime(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  return Number.isNaN(Date.parse(value)) ? null : value;
 }
 
 function readLocalState(): PlanningState | null {

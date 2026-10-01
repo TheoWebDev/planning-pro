@@ -117,6 +117,8 @@ export interface PlanningSettings {
   readonly fuelConsumption: number;
   /** Prix du carburant, en euros par litre. */
   readonly fuelPricePerLiter: number;
+  /** Instant ISO du dernier relevé SP98 ; `null` si le prix a été saisi à la main. */
+  readonly fuelPriceReadAt: string | null;
 }
 
 export const DEFAULT_SETTINGS: PlanningSettings = {
@@ -127,6 +129,7 @@ export const DEFAULT_SETTINGS: PlanningSettings = {
   taxFixedAmount: 1515,
   fuelConsumption: 6.4,
   fuelPricePerLiter: 1.95,
+  fuelPriceReadAt: null,
 };
 
 /**

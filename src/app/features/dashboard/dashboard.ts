@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { DAY_TYPE_MAP } from '../../core/models/planning';
 import { PlanningStore } from '../../core/services/planning-store';
 import { MONTH_SHORT } from '../../core/utils/date';
-import { formatEuro, formatKm, formatNumber } from '../../core/utils/format';
+import { formatDateTime, formatEuro, formatNumber } from '../../core/utils/format';
 import { BarChart, type ChartSeries } from '../../shared/bar-chart/bar-chart';
 import { DonutChart, type DonutSlice } from '../../shared/donut-chart/donut-chart';
 import { InfoTip } from '../../shared/info-tip/info-tip';
@@ -29,16 +29,20 @@ export class Dashboard {
   protected readonly onsiteHint = computed(
     () => `${formatNumber(this.stats().onsiteShare, 0, 1)} % des jours travaillés`,
   );
-  protected readonly kmPerTripHint = computed(
-    () => `${formatKm(this.stats().kmPerTrip, 1)} par trajet`,
+  protected readonly kmPerMonthHint = computed(
+    () => `${formatNumber(this.stats().kmPerMonth, 0)} km / mois`,
   );
-  protected readonly tollPerTripHint = computed(
-    () => `${formatEuro(this.stats().tollPerTrip)} par trajet`,
+  protected readonly tollPerMonthHint = computed(
+    () => `${formatEuro(this.stats().tollPerMonth)} / mois`,
+  );
+  protected readonly fuelPerMonthHint = computed(
+    () => `${formatEuro(this.stats().fuelCostPerMonth)} / mois`,
   );
   protected readonly fuelHint = computed(() => {
     const settings = this.settings();
-    const liters = formatNumber(this.stats().fuelLiters, 0);
-    return `${liters} L à ${formatNumber(settings.fuelPricePerLiter, 2, 3)} €/L`;
+    const price = `${formatNumber(settings.fuelPricePerLiter, 2, 3)} €/L`;
+    const stamped = settings.fuelPriceReadAt ? formatDateTime(settings.fuelPriceReadAt) : '';
+    return stamped ? `${price} · ${stamped}` : price;
   });
   protected readonly fuelInfo = computed(() => {
     const stats = this.stats();
@@ -76,11 +80,6 @@ export class Dashboard {
         values: months.map((month) => month.remoteDays),
       },
       { label: 'Congés', color: 'var(--c-leave)', values: months.map((month) => month.leaveDays) },
-      {
-        label: 'Fériés',
-        color: 'var(--c-holiday)',
-        values: months.map((month) => month.holidayDays),
-      },
     ];
   });
 
@@ -90,7 +89,6 @@ export class Dashboard {
       { label: 'Sur site', color: 'var(--c-onsite)', value: stats.onsiteDays },
       { label: 'Télétravail', color: 'var(--c-remote)', value: stats.remoteDays },
       { label: 'Congés', color: 'var(--c-leave)', value: stats.leaveDays },
-      { label: 'Jours fériés', color: 'var(--c-holiday)', value: stats.holidayDays },
       { label: 'Absences', color: 'var(--c-other)', value: stats.otherDays },
     ];
   });

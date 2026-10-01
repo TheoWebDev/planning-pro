@@ -6,7 +6,7 @@ import { FuelPriceService } from '../../core/services/fuel-price.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PlanningStore } from '../../core/services/planning-store';
 import { readTextFile } from '../../core/utils/file';
-import { formatNumber } from '../../core/utils/format';
+import { formatDateTime, formatNumber } from '../../core/utils/format';
 
 type DangerAction = 'year' | 'all';
 
@@ -32,6 +32,10 @@ export class Settings {
 
   protected readonly pendingAction = signal<DangerAction | null>(null);
   protected readonly fuelPriceLoading = signal(false);
+  protected readonly fuelPriceStamp = computed(() => {
+    const iso = this.settings().fuelPriceReadAt;
+    return iso ? formatDateTime(iso) : '';
+  });
 
   protected readonly tollRates = computed(() => this.settings().tollRates);
 
@@ -59,7 +63,10 @@ export class Settings {
     this.fuelPriceLoading.set(true);
     try {
       const reading = await this.fuelPrices.readSp98();
-      this.store.updateSettings({ fuelPricePerLiter: reading.pricePerLiter });
+      this.store.updateSettings({
+        fuelPricePerLiter: reading.pricePerLiter,
+        fuelPriceReadAt: new Date().toISOString(),
+      });
       this.notifications.success(
         `SP98 à ${formatNumber(reading.pricePerLiter, 3)} €/L, moyenne de ${formatNumber(reading.stations)} stations.`,
       );

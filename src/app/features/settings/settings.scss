@@ -27,6 +27,11 @@
   margin-bottom: 1rem;
 }
 
+.card .btn + p.field__hint {
+  margin-top: 0.45rem;
+  margin-bottom: 0;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

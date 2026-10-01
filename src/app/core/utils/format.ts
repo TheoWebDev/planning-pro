@@ -25,3 +25,18 @@ export function formatEuro(value: number): string {
 export function formatKm(value: number, maxDigits = 0): string {
   return `${formatter(0, maxDigits).format(value)} km`;
 }
+
+let dateTimeFormatter: Intl.DateTimeFormat | undefined;
+
+/** Date et heure locales, ex. « 01/10/2026 14:32 ». */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  dateTimeFormatter ??= new Intl.DateTimeFormat('fr-FR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+  return dateTimeFormatter.format(date);
+}

@@ -22,6 +22,9 @@ import { InfoTip } from '../info-tip/info-tip';
         <small>{{ unit() }}</small>
       }
     </strong>
+    @if (sub()) {
+      <span class="kpi__sub">{{ sub() }}</span>
+    }
     @if (hint()) {
       <span class="kpi__hint">{{ hint() }}</span>
     }
@@ -78,6 +81,12 @@ import { InfoTip } from '../info-tip/info-tip';
       font-weight: 500;
     }
 
+    .kpi__sub {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-variant-numeric: tabular-nums;
+    }
+
     .kpi__hint {
       color: var(--text-faint);
       font-size: 0.74rem;
@@ -88,6 +97,8 @@ export class KpiCard {
   readonly label = input.required<string>();
   readonly value = input.required<string | number | null>();
   readonly unit = input<string>('');
+  /** Ligne secondaire sous le total, plus petite, ex. moyenne mensuelle. */
+  readonly sub = input<string>('');
   readonly hint = input<string>('');
   /** Texte de la bulle d'information affichée à côté du libellé. */
   readonly info = input<string>('');

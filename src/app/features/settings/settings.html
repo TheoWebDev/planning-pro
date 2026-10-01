@@ -151,6 +151,9 @@
     >
       {{ fuelPriceLoading() ? 'Relevé en cours…' : 'Récupérer le prix moyen SP98' }}
     </button>
+    @if (fuelPriceStamp()) {
+      <p class="field__hint">Dernier relevé : {{ fuelPriceStamp() }}</p>
+    }
   </section>
 
   <section class="card">

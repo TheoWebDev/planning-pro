@@ -39,13 +39,6 @@
     [accent]="types.remote.color"
   />
   <app-kpi-card label="Congés" [value]="stats().leaveDays" unit="j" [accent]="types.leave.color" />
-  <app-kpi-card
-    label="Jours fériés"
-    [value]="stats().holidayDays"
-    unit="j"
-    [accent]="types.holiday.color"
-    hint="Calculés automatiquement"
-  />
 </div>
 
 <h2 class="section-title">Trajets et coûts</h2>
@@ -54,38 +47,21 @@
     label="Kilomètres parcourus"
     [value]="stats().km | number: '1.0-0'"
     unit="km"
-    [hint]="kmPerTripHint()"
-  />
-  <app-kpi-card
-    label="Kilomètres par mois"
-    [value]="stats().kmPerMonth | number: '1.0-0'"
-    unit="km"
-    hint="Moyenne sur les mois avec activité"
+    [sub]="kmPerMonthHint()"
   />
   <app-kpi-card
     label="Total des péages"
     [value]="stats().toll | number: '1.2-2'"
     unit="€"
-    [hint]="tollPerTripHint()"
-  />
-  <app-kpi-card
-    label="Péages par mois"
-    [value]="stats().tollPerMonth | number: '1.2-2'"
-    unit="€"
-    hint="Moyenne sur les mois avec activité"
+    [sub]="tollPerMonthHint()"
   />
   <app-kpi-card
     label="Budget carburant"
     [value]="stats().fuelCost | number: '1.2-2'"
     unit="€"
+    [sub]="fuelPerMonthHint()"
     [hint]="fuelHint()"
     [info]="fuelInfo()"
-  />
-  <app-kpi-card
-    label="Carburant par mois"
-    [value]="stats().fuelCostPerMonth | number: '1.2-2'"
-    unit="€"
-    hint="Moyenne sur les mois avec activité"
   />
 </div>
 
@@ -113,7 +89,7 @@
     </dl>
   </div>
   <div class="tax__total">
-    <p class="faint">Montant total à déclarer</p>
+    <p class="faint">Indemnité Kilométrique</p>
     <strong>{{ stats().totalDeclared | number: '1.2-2' }} €</strong>
     <a class="tax__link" routerLink="/reglages">Ajuster le barème</a>
   </div>

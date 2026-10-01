@@ -33,6 +33,14 @@ export function validateState(input) {
       return { ok: false, error: `Réglage invalide : ${key}.` };
     }
   }
+  if (
+    settings.fuelPriceReadAt !== undefined &&
+    settings.fuelPriceReadAt !== null &&
+    (typeof settings.fuelPriceReadAt !== 'string' ||
+      Number.isNaN(Date.parse(settings.fuelPriceReadAt)))
+  ) {
+    return { ok: false, error: 'Réglage invalide : fuelPriceReadAt.' };
+  }
   if (settings.defaultWeekdayType !== 'onsite' && settings.defaultWeekdayType !== 'remote') {
     return { ok: false, error: 'Type de jour ouvré invalide.' };
   }
