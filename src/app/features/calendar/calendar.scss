@@ -140,15 +140,15 @@
 }
 
 .month-card__badge--onsite {
-  background: color-mix(in srgb, var(--c-onsite) 26%, var(--surface-2));
+  background: color-mix(in srgb, var(--c-onsite) 86%, var(--surface-2));
 }
 
 .month-card__badge--remote {
-  background: color-mix(in srgb, var(--c-remote) 26%, var(--surface-2));
+  background: color-mix(in srgb, var(--c-remote) 86%, var(--surface-2));
 }
 
 .month-card__badge--leave {
-  background: color-mix(in srgb, var(--c-leave) 26%, var(--surface-2));
+  background: color-mix(in srgb, var(--c-leave) 86%, var(--surface-2));
 }
 
 /* --------------------------------------------------------------- vue mensuelle */
