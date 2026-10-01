@@ -54,6 +54,24 @@ export class Calendar {
     }
   }
 
+  protected monthHeadLabel(month: number): string {
+    const stats = this.store.monthStats()[month];
+    const parts = [`Détailler ${MONTH_LABELS[month]} ${this.store.selectedYear()}`];
+    if (!stats) {
+      return parts[0];
+    }
+    if (stats.onsiteDays) {
+      parts.push(`${stats.onsiteDays} sur site`);
+    }
+    if (stats.remoteDays) {
+      parts.push(`${stats.remoteDays} en télétravail`);
+    }
+    if (stats.leaveDays) {
+      parts.push(`${stats.leaveDays} congés`);
+    }
+    return parts.join(', ');
+  }
+
   protected selectDay(iso: string): void {
     this.selectedIso.set(iso);
   }

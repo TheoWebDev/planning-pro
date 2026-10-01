@@ -97,9 +97,10 @@
 
 .month-card__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.35rem 0.5rem;
   width: 100%;
   margin-bottom: 0.5rem;
   padding: 0;
@@ -109,6 +110,7 @@
 }
 
 .month-card__name {
+  margin-right: auto;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -117,13 +119,36 @@
   color: var(--accent-text);
 }
 
+.month-card__counts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
 .month-card__badge {
-  padding: 0.1rem 0.45rem;
-  background: color-mix(in srgb, var(--c-onsite) 26%, var(--surface-2));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  padding: 0.1rem 0.35rem;
   border-radius: 999px;
-  color: var(--text-muted);
+  color: var(--text);
   font-size: 0.68rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.month-card__badge--onsite {
+  background: color-mix(in srgb, var(--c-onsite) 26%, var(--surface-2));
+}
+
+.month-card__badge--remote {
+  background: color-mix(in srgb, var(--c-remote) 26%, var(--surface-2));
+}
+
+.month-card__badge--leave {
+  background: color-mix(in srgb, var(--c-leave) 26%, var(--surface-2));
 }
 
 /* --------------------------------------------------------------- vue mensuelle */
@@ -176,6 +201,11 @@
   font-size: 0.95rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.month-stats .month-card__badge {
+  min-width: 1.6rem;
+  font-size: 0.85rem;
 }
 
 /* --------------------------------------------------------------------- voile */

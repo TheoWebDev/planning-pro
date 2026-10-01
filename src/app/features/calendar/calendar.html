@@ -46,14 +46,28 @@
         <button
           type="button"
           class="month-card__head"
-          [attr.aria-label]="'Détailler ' + monthLabels[$index] + ' ' + store.selectedYear()"
+          [attr.aria-label]="monthHeadLabel($index)"
           (click)="openMonth($index)"
         >
           <span class="month-card__name">{{ monthLabels[$index] }}</span>
-          @let onsite = store.monthStats()[$index].onsiteDays;
-          @if (onsite > 0) {
-            <span class="month-card__badge">{{ onsite }} sur site</span>
-          }
+          @let monthStat = store.monthStats()[$index];
+          <span class="month-card__counts">
+            @if (monthStat.onsiteDays) {
+              <span class="month-card__badge month-card__badge--onsite" title="Sur site">{{
+                monthStat.onsiteDays
+              }}</span>
+            }
+            @if (monthStat.remoteDays) {
+              <span class="month-card__badge month-card__badge--remote" title="Télétravail">{{
+                monthStat.remoteDays
+              }}</span>
+            }
+            @if (monthStat.leaveDays) {
+              <span class="month-card__badge month-card__badge--leave" title="Congés">{{
+                monthStat.leaveDays
+              }}</span>
+            }
+          </span>
         </button>
         <app-month-grid
           [month]="$index"
@@ -91,15 +105,21 @@
         </div>
         <div>
           <dt>Sur site</dt>
-          <dd>{{ stats.onsiteDays }} j</dd>
+          <dd>
+            <span class="month-card__badge month-card__badge--onsite">{{ stats.onsiteDays }}</span>
+          </dd>
         </div>
         <div>
           <dt>Télétravail</dt>
-          <dd>{{ stats.remoteDays }} j</dd>
+          <dd>
+            <span class="month-card__badge month-card__badge--remote">{{ stats.remoteDays }}</span>
+          </dd>
         </div>
         <div>
           <dt>Congés</dt>
-          <dd>{{ stats.leaveDays }} j</dd>
+          <dd>
+            <span class="month-card__badge month-card__badge--leave">{{ stats.leaveDays }}</span>
+          </dd>
         </div>
         <div>
           <dt>Kilomètres</dt>
