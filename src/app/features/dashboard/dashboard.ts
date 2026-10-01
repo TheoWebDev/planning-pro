@@ -7,12 +7,13 @@ import { MONTH_SHORT } from '../../core/utils/date';
 import { formatEuro, formatKm, formatNumber } from '../../core/utils/format';
 import { BarChart, type ChartSeries } from '../../shared/bar-chart/bar-chart';
 import { DonutChart, type DonutSlice } from '../../shared/donut-chart/donut-chart';
+import { InfoTip } from '../../shared/info-tip/info-tip';
 import { KpiCard } from '../../shared/kpi-card/kpi-card';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, RouterLink, BarChart, DonutChart, KpiCard],
+  imports: [DecimalPipe, RouterLink, BarChart, DonutChart, InfoTip, KpiCard],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -38,6 +39,11 @@ export class Dashboard {
     const settings = this.settings();
     const liters = formatNumber(this.stats().fuelLiters, 0);
     return `${liters} L à ${formatNumber(settings.fuelPricePerLiter, 2, 3)} €/L`;
+  });
+  protected readonly fuelInfo = computed(() => {
+    const stats = this.stats();
+    const consumption = formatNumber(this.settings().fuelConsumption, 1, 1);
+    return `${formatNumber(stats.km, 0)} km × ${consumption} L/100 km = ${formatNumber(stats.fuelLiters, 0)} L`;
   });
 
   protected readonly kmSeries = computed<ChartSeries[]>(() => [

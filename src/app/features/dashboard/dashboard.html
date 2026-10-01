@@ -79,6 +79,7 @@
     [value]="stats().fuelCost | number: '1.2-2'"
     unit="€"
     [hint]="fuelHint()"
+    [info]="fuelInfo()"
   />
   <app-kpi-card
     label="Carburant par mois"
@@ -91,7 +92,10 @@
 <h2 class="section-title">Déclaration fiscale</h2>
 <section class="tax card">
   <div class="tax__formula">
-    <p class="faint">Barème appliqué</p>
+    <p class="faint tax__scale">
+      Barème appliqué
+      <app-info-tip text="7 CV ou plus" />
+    </p>
     <p class="tax__expr">
       ({{ stats().km | number: '1.0-0' }}&nbsp;km × {{ settings().taxRatePerKm | number: '1.0-3' }})
       +

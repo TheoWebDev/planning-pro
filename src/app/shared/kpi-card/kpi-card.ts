@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { InfoTip } from '../info-tip/info-tip';
 
 @Component({
   selector: 'app-kpi-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [InfoTip],
   host: { '[class.kpi--highlight]': 'highlight()', class: 'kpi' },
   template: `
     <span class="kpi__label">
@@ -10,6 +12,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
         <i class="kpi__dot" [style.background]="accent()"></i>
       }
       {{ label() }}
+      @if (info()) {
+        <app-info-tip [text]="info()" />
+      }
     </span>
     <strong class="kpi__value">
       {{ value() }}
@@ -26,6 +31,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       display: flex;
       flex-direction: column;
       gap: 0.3rem;
+      overflow: visible;
       padding: 0.9rem 1rem;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -35,6 +41,10 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     :host(.kpi--highlight) {
       background: linear-gradient(160deg, var(--accent-soft), var(--surface) 70%);
       border-color: #3b4a7a;
+    }
+
+    :host:has(:focus-within) {
+      z-index: 5;
     }
 
     .kpi__label {
@@ -79,6 +89,8 @@ export class KpiCard {
   readonly value = input.required<string | number | null>();
   readonly unit = input<string>('');
   readonly hint = input<string>('');
+  /** Texte de la bulle d'information affichée à côté du libellé. */
+  readonly info = input<string>('');
   /** Couleur de la puce affichée devant le libellé. */
   readonly accent = input<string>('');
   readonly highlight = input(false);
