@@ -2,9 +2,11 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DEFAULT_SETTINGS, type TollRate } from '../../core/models/planning';
 import { ExportService } from '../../core/services/export.service';
+import { FuelPriceService } from '../../core/services/fuel-price.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PlanningStore } from '../../core/services/planning-store';
 import { readTextFile } from '../../core/utils/file';
+import { formatNumber } from '../../core/utils/format';
 
 type DangerAction = 'year' | 'all';
 
@@ -20,6 +22,7 @@ const ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export class Settings {
   private readonly store = inject(PlanningStore);
   private readonly notifications = inject(NotificationService);
+  private readonly fuelPrices = inject(FuelPriceService);
   protected readonly exporter = inject(ExportService);
 
   protected readonly settings = this.store.settings;
@@ -28,6 +31,7 @@ export class Settings {
   protected readonly stats = this.store.yearStats;
 
   protected readonly pendingAction = signal<DangerAction | null>(null);
+  protected readonly fuelPriceLoading = signal(false);
 
   protected readonly tollRates = computed(() => this.settings().tollRates);
 
@@ -39,12 +43,31 @@ export class Settings {
     );
   });
 
-  protected updateNumber(key: 'defaultKm' | 'taxRatePerKm' | 'taxFixedAmount', raw: string): void {
+  protected updateNumber(
+    key: 'defaultKm' | 'taxRatePerKm' | 'taxFixedAmount' | 'fuelConsumption' | 'fuelPricePerLiter',
+    raw: string,
+  ): void {
     const value = parseAmount(raw);
     if (value === null) {
       return;
     }
     this.store.updateSettings({ [key]: value });
+  }
+
+  /** Pré-remplit le prix au litre avec la moyenne SP98 relevée par l'open data. */
+  protected async fetchSp98Price(): Promise<void> {
+    this.fuelPriceLoading.set(true);
+    try {
+      const reading = await this.fuelPrices.readSp98();
+      this.store.updateSettings({ fuelPricePerLiter: reading.pricePerLiter });
+      this.notifications.success(
+        `SP98 à ${formatNumber(reading.pricePerLiter, 3)} €/L, moyenne de ${formatNumber(reading.stations)} stations.`,
+      );
+    } catch {
+      this.notifications.error('Relevé indisponible : saisissez le prix au litre à la main.');
+    } finally {
+      this.fuelPriceLoading.set(false);
+    }
   }
 
   protected updateTollAmount(index: number, raw: string): void {

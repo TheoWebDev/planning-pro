@@ -98,6 +98,62 @@
   </section>
 
   <section class="card">
+    <h2 class="card__title">Carburant</h2>
+    <p class="field__hint">
+      Budget carburant des trajets : kilomètres × consommation × prix au litre. C'est une dépense
+      réelle, indicative : le barème kilométrique ci-dessous couvre déjà le carburant de façon
+      forfaitaire, les deux montants ne s'additionnent pas.
+    </p>
+    <div class="grid-2">
+      <div class="field">
+        <label for="fuel-consumption">Consommation moyenne (L/100 km)</label>
+        <input
+          id="fuel-consumption"
+          type="number"
+          min="0"
+          step="0.1"
+          [value]="settings().fuelConsumption"
+          (input)="updateNumber('fuelConsumption', $any($event.target).value)"
+        />
+        <span class="field__hint">
+          Relevée sur l'ordinateur de bord, ou calculée sur un plein : km parcourus ÷ litres × 100.
+        </span>
+      </div>
+      <div class="field">
+        <label for="fuel-price">Prix au litre (€)</label>
+        <input
+          id="fuel-price"
+          type="number"
+          min="0"
+          step="0.001"
+          [value]="settings().fuelPricePerLiter"
+          (input)="updateNumber('fuelPricePerLiter', $any($event.target).value)"
+        />
+        <span class="field__hint">
+          Préférez votre moyenne sur l'année : le relevé ci-dessous est le prix du jour.
+        </span>
+      </div>
+    </div>
+    <p class="preview">
+      <span class="faint">Appliqué à {{ year() }}</span>
+      <code>
+        ({{ stats().km | number: '1.0-0' }} km ×
+        {{ settings().fuelConsumption | number: '1.1-1' }} ÷ 100) ×
+        {{ settings().fuelPricePerLiter | number: '1.2-3' }} =
+        {{ stats().fuelCost | number: '1.2-2' }} €
+      </code>
+    </p>
+    <button
+      type="button"
+      class="btn btn--sm"
+      [disabled]="fuelPriceLoading()"
+      (click)="fetchSp98Price()"
+    >
+      {{ fuelPriceLoading() ? 'Relevé en cours…' : 'Récupérer le prix moyen SP98' }}
+    </button>
+  </section>
+
+  <section class="card">
     <h2 class="card__title">Barème kilométrique</h2>
     <p class="field__hint">
       Formule utilisée pour la déclaration : (kilomètres × taux) + forfait. Adaptez les valeurs au

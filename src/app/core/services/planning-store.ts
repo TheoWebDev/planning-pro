@@ -420,6 +420,14 @@ function normalizeState(input: unknown): PlanningState {
       readProp(raw.settings, 'taxFixedAmount'),
       base.settings.taxFixedAmount,
     ),
+    fuelConsumption: positiveNumber(
+      readProp(raw.settings, 'fuelConsumption'),
+      base.settings.fuelConsumption,
+    ),
+    fuelPricePerLiter: positiveNumber(
+      readProp(raw.settings, 'fuelPricePerLiter'),
+      base.settings.fuelPricePerLiter,
+    ),
   };
 
   const days: Record<string, DayEntry> = {};

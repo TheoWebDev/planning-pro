@@ -113,6 +113,10 @@ export interface PlanningSettings {
   readonly taxRatePerKm: number;
   /** Barème kilométrique : forfait ajouté au total. */
   readonly taxFixedAmount: number;
+  /** Consommation moyenne du véhicule, en litres aux 100 km. */
+  readonly fuelConsumption: number;
+  /** Prix du carburant, en euros par litre. */
+  readonly fuelPricePerLiter: number;
 }
 
 export const DEFAULT_SETTINGS: PlanningSettings = {
@@ -121,6 +125,8 @@ export const DEFAULT_SETTINGS: PlanningSettings = {
   defaultWeekdayType: 'remote',
   taxRatePerKm: 0.394,
   taxFixedAmount: 1515,
+  fuelConsumption: 6.4,
+  fuelPricePerLiter: 1.95,
 };
 
 /**

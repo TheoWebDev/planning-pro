@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { DAY_TYPE_MAP } from '../models/planning';
 import { MONTH_LABELS } from '../utils/date';
 import { downloadText, toCsv } from '../utils/file';
+import { fuelCostFor } from '../utils/stats';
 import { PlanningStore } from './planning-store';
 
 @Injectable({ providedIn: 'root' })
@@ -22,6 +23,7 @@ export class ExportService {
         'Congés',
         'Fériés',
         'Kilomètres',
+        'Carburant (€)',
         'Péages (€)',
       ],
       ...stats.months.map((month) => [
@@ -32,6 +34,7 @@ export class ExportService {
         month.leaveDays,
         month.holidayDays,
         month.km,
+        fuelCostFor(month.km, settings),
         month.toll,
       ]),
       [
@@ -42,9 +45,20 @@ export class ExportService {
         stats.leaveDays,
         stats.holidayDays,
         stats.km,
+        stats.fuelCost,
         stats.toll,
       ],
-      ['Moyenne / mois', '', '', '', '', '', stats.kmPerMonth, stats.tollPerMonth],
+      [
+        'Moyenne / mois',
+        '',
+        '',
+        '',
+        '',
+        '',
+        stats.kmPerMonth,
+        stats.fuelCostPerMonth,
+        stats.tollPerMonth,
+      ],
       [],
       [
         'Barème kilométrique',
@@ -53,6 +67,14 @@ export class ExportService {
       ['Déduction à déclarer (€)', stats.taxDeduction],
       ['Péages de l’année (€)', stats.toll],
       ['Montant total (€)', stats.totalDeclared],
+      [],
+      [
+        'Budget carburant',
+        `(${stats.km} × ${decimalComma(settings.fuelConsumption)} / 100) × ${decimalComma(settings.fuelPricePerLiter)}`,
+      ],
+      ['Carburant consommé (L)', stats.fuelLiters],
+      ['Carburant de l’année (€)', stats.fuelCost],
+      ['Coût réel des trajets, carburant + péages (€)', stats.commuteCost],
     ];
 
     downloadText(`planning-${stats.year}-recapitulatif.csv`, toCsv(rows), 'text/csv');

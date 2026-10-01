@@ -34,6 +34,11 @@ export class Dashboard {
   protected readonly tollPerTripHint = computed(
     () => `${formatEuro(this.stats().tollPerTrip)} par trajet`,
   );
+  protected readonly fuelHint = computed(() => {
+    const settings = this.settings();
+    const liters = formatNumber(this.stats().fuelLiters, 0);
+    return `${liters} L à ${formatNumber(settings.fuelPricePerLiter, 2, 3)} €/L`;
+  });
 
   protected readonly kmSeries = computed<ChartSeries[]>(() => [
     {

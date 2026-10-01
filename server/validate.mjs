@@ -1,6 +1,8 @@
 const VALID_TYPES = new Set(['onsite', 'remote', 'leave', 'holiday', 'weekend', 'other']);
 const ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SETTING_KEYS = ['defaultKm', 'taxRatePerKm', 'taxFixedAmount'];
+/** Réglages arrivés après la version 2 : absents des états enregistrés avant. */
+const OPTIONAL_SETTING_KEYS = ['fuelConsumption', 'fuelPricePerLiter'];
 
 /** Refuse un corps qui ne ressemble pas à un état Planning Pro, sans le réécrire. */
 export function validateState(input) {
@@ -19,6 +21,15 @@ export function validateState(input) {
   for (const key of SETTING_KEYS) {
     const value = settings[key];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      return { ok: false, error: `Réglage invalide : ${key}.` };
+    }
+  }
+  for (const key of OPTIONAL_SETTING_KEYS) {
+    const value = settings[key];
+    if (
+      value !== undefined &&
+      (typeof value !== 'number' || !Number.isFinite(value) || value < 0)
+    ) {
       return { ok: false, error: `Réglage invalide : ${key}.` };
     }
   }
@@ -55,7 +66,11 @@ export function validateState(input) {
     }
   }
 
-  if (!Number.isInteger(input.selectedYear) || input.selectedYear < 1970 || input.selectedYear > 2200) {
+  if (
+    !Number.isInteger(input.selectedYear) ||
+    input.selectedYear < 1970 ||
+    input.selectedYear > 2200
+  ) {
     return { ok: false, error: 'Année invalide.' };
   }
 

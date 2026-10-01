@@ -36,6 +36,17 @@ export interface YearStats extends PeriodStats {
   readonly taxDeduction: number;
   /** Déduction kilométrique + péages de l'année. */
   readonly totalDeclared: number;
+  /** Carburant brûlé par les trajets de l'année, en litres. */
+  readonly fuelLiters: number;
+  /** Budget carburant de l'année, en euros. */
+  readonly fuelCost: number;
+  /** Budget carburant moyen par mois ayant de l'activité. */
+  readonly fuelCostPerMonth: number;
+  /**
+   * Dépense réelle des trajets : carburant + péages. À ne pas confondre avec
+   * `totalDeclared`, dont le barème couvre déjà le carburant de façon forfaitaire.
+   */
+  readonly commuteCost: number;
 }
 
 const EMPTY_COUNTS: Record<DayType, number> = {
@@ -78,6 +89,16 @@ export function computeMonthStats(daysByMonth: readonly (readonly ResolvedDay[])
   return daysByMonth.map((days, month) => ({ month, ...computePeriodStats(days) }));
 }
 
+/** Litres brûlés sur une distance, à la consommation moyenne réglée. */
+export function fuelLitersFor(km: number, settings: PlanningSettings): number {
+  return round((km * settings.fuelConsumption) / 100, 2);
+}
+
+/** Coût du carburant sur une distance : litres × prix au litre. */
+export function fuelCostFor(km: number, settings: PlanningSettings): number {
+  return round(fuelLitersFor(km, settings) * settings.fuelPricePerLiter, 2);
+}
+
 export function computeYearStats(
   year: number,
   months: readonly MonthStats[],
@@ -86,6 +107,7 @@ export function computeYearStats(
   const total = sumStats(months);
   const activeMonths = months.filter((month) => month.totalDays > 0).length || 1;
   const taxDeduction = round(total.km * settings.taxRatePerKm + settings.taxFixedAmount, 2);
+  const fuelCost = fuelCostFor(total.km, settings);
 
   return {
     year,
@@ -98,6 +120,10 @@ export function computeYearStats(
     onsiteShare: total.workedDays ? round((total.onsiteDays / total.workedDays) * 100, 1) : 0,
     taxDeduction,
     totalDeclared: round(taxDeduction + total.toll, 2),
+    fuelLiters: fuelLitersFor(total.km, settings),
+    fuelCost,
+    fuelCostPerMonth: round(fuelCost / activeMonths, 2),
+    commuteCost: round(fuelCost + total.toll, 2),
   };
 }
 

@@ -30,11 +30,12 @@
         <th scope="col">Congés</th>
         <th scope="col">Fériés</th>
         <th scope="col">Kilomètres</th>
+        <th scope="col">Carburant</th>
         <th scope="col">Péages</th>
       </tr>
     </thead>
     <tbody>
-      @for (month of stats().months; track month.month) {
+      @for (month of rows(); track month.month) {
         <tr>
           <th scope="row">{{ monthLabels[month.month] }}</th>
           <td>{{ month.workedDays }}</td>
@@ -43,6 +44,7 @@
           <td>{{ month.leaveDays }}</td>
           <td>{{ month.holidayDays }}</td>
           <td>{{ month.km | number: '1.0-0' }}</td>
+          <td>{{ month.fuelCost | number: '1.2-2' }} €</td>
           <td>{{ month.toll | number: '1.2-2' }} €</td>
         </tr>
       }
@@ -56,18 +58,21 @@
         <td>{{ stats().leaveDays }}</td>
         <td>{{ stats().holidayDays }}</td>
         <td>{{ stats().km | number: '1.0-0' }}</td>
+        <td>{{ stats().fuelCost | number: '1.2-2' }} €</td>
         <td>{{ stats().toll | number: '1.2-2' }} €</td>
       </tr>
       <tr class="secondary">
         <td>Moyenne mensuelle</td>
         <td colspan="5"></td>
         <td>{{ stats().kmPerMonth | number: '1.0-0' }}</td>
+        <td>{{ stats().fuelCostPerMonth | number: '1.2-2' }} €</td>
         <td>{{ stats().tollPerMonth | number: '1.2-2' }} €</td>
       </tr>
       <tr class="secondary">
         <td>Moyenne par trajet</td>
         <td colspan="5"></td>
         <td>{{ stats().kmPerTrip | number: '1.0-1' }}</td>
+        <td>{{ fuelCostPerTrip() | number: '1.2-2' }} €</td>
         <td>{{ stats().tollPerTrip | number: '1.2-2' }} €</td>
       </tr>
     </tfoot>
@@ -101,6 +106,34 @@
     <li class="declaration__steps--total">
       <span class="declaration__label">Montant total</span>
       <span class="declaration__value">{{ stats().totalDeclared | number: '1.2-2' }} €</span>
+    </li>
+  </ol>
+</section>
+
+<h2 class="section-title">Coût réel des trajets</h2>
+<section class="card declaration">
+  <p class="field__hint declaration__note">
+    Dépense effectivement engagée, à ne pas additionner au montant déclaré : le barème kilométrique
+    couvre déjà le carburant de façon forfaitaire.
+  </p>
+  <ol class="declaration__steps">
+    <li>
+      <span class="declaration__label">
+        Carburant
+        <small class="faint">
+          {{ stats().fuelLiters | number: '1.0-0' }} L à
+          {{ settings().fuelPricePerLiter | number: '1.2-3' }} €/L
+        </small>
+      </span>
+      <span class="declaration__value">{{ stats().fuelCost | number: '1.2-2' }} €</span>
+    </li>
+    <li>
+      <span class="declaration__label">Péages de l’année</span>
+      <span class="declaration__value">{{ stats().toll | number: '1.2-2' }} €</span>
+    </li>
+    <li class="declaration__steps--total">
+      <span class="declaration__label">Coût total</span>
+      <span class="declaration__value">{{ stats().commuteCost | number: '1.2-2' }} €</span>
     </li>
   </ol>
 </section>

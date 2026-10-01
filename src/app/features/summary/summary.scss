@@ -43,6 +43,12 @@ table.data tbody tr:hover th[scope='row'] {
   max-width: 620px;
 }
 
+.declaration__note {
+  display: block;
+  margin-bottom: 0.5rem;
+  max-width: 58ch;
+}
+
 .declaration__steps {
   margin: 0;
   padding: 0;

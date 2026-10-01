@@ -2,6 +2,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, resolve, sep } from 'node:path';
 import { openDatabase, readState, writeState } from './database.mjs';
+import { fetchSp98Price } from './fuel-price.mjs';
 import { validateState } from './validate.mjs';
 
 const MAX_BODY_BYTES = 1_000_000;
@@ -26,17 +27,19 @@ const MIME_TYPES = {
  * API HTTP + fichiers statiques éventuels. Une seule ligne SQLite garde
  * l'état complet, le même quel que soit le port du navigateur.
  */
-export function createApp({ databasePath, staticDir = null }) {
+export function createApp({ databasePath, staticDir = null, fuelPriceReader = fetchSp98Price }) {
   const database = openDatabase(databasePath);
   const server = createServer((request, response) => {
-    void handleRequest(request, response, database, staticDir).catch((error) => {
-      if (response.headersSent) {
-        response.destroy();
-        return;
-      }
-      const status = error.statusCode ?? 500;
-      sendJson(response, request, status, { error: 'Erreur interne.' });
-    });
+    void handleRequest(request, response, { database, staticDir, fuelPriceReader }).catch(
+      (error) => {
+        if (response.headersSent) {
+          response.destroy();
+          return;
+        }
+        const status = error.statusCode ?? 500;
+        sendJson(response, request, status, { error: 'Erreur interne.' });
+      },
+    );
   });
 
   return {
@@ -56,7 +59,7 @@ export function createApp({ databasePath, staticDir = null }) {
   };
 }
 
-async function handleRequest(request, response, database, staticDir) {
+async function handleRequest(request, response, { database, staticDir, fuelPriceReader }) {
   const url = new URL(request.url ?? '/', 'http://127.0.0.1');
   const { pathname } = url;
 
@@ -92,6 +95,18 @@ async function handleRequest(request, response, database, staticDir) {
     }
     writeState(database, parsed);
     sendJson(response, request, 200, { ok: true });
+    return;
+  }
+
+  if (pathname === '/api/fuel-price' && request.method === 'GET') {
+    try {
+      sendJson(response, request, 200, await fuelPriceReader());
+    } catch (error) {
+      // Le relevé n'est qu'un confort de saisie : une panne de l'open data ne doit
+      // pas remonter comme une erreur 500 du serveur.
+      console.error('Relevé carburant impossible :', error);
+      sendJson(response, request, 503, { error: 'Prix du carburant indisponible.' });
+    }
     return;
   }
 

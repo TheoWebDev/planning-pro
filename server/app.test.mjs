@@ -79,6 +79,37 @@ test('retrouve les saisies après un redémarrage du serveur', async () => {
   assert.deepEqual(await loaded.json(), { state: sample });
 });
 
+test('expose le relevé SP98 fourni par le lecteur', async () => {
+  await app.close();
+  const reading = {
+    fuel: 'SP98',
+    pricePerLiter: 1.873,
+    stations: 100,
+    readAt: '2026-01-01T00:00:00.000Z',
+  };
+  app = createApp({ databasePath, fuelPriceReader: async () => reading });
+  await listen(app);
+
+  const response = await fetch(`${baseUrl}/api/fuel-price`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), reading);
+});
+
+test('répond 503 si le relevé carburant échoue', async () => {
+  await app.close();
+  app = createApp({
+    databasePath,
+    fuelPriceReader: async () => {
+      throw new Error('open data down');
+    },
+  });
+  await listen(app);
+
+  const response = await fetch(`${baseUrl}/api/fuel-price`);
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: 'Prix du carburant indisponible.' });
+});
+
 function listen(instance) {
   return new Promise((resolve) => {
     instance.server.listen(0, '127.0.0.1', () => {

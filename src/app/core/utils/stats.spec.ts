@@ -111,6 +111,31 @@ describe('computeYearStats', () => {
     expect(stats.onsiteShare).toBe(40);
   });
 
+  it('calcule le carburant à partir de la consommation et du prix au litre', () => {
+    const months = [
+      monthStats(0, { onsiteDays: 10, workedDays: 10, km: 1000, toll: 60, totalDays: 31 }),
+    ];
+    const settings = { ...DEFAULT_SETTINGS, fuelConsumption: 6, fuelPricePerLiter: 2 };
+
+    const stats = computeYearStats(2026, months, settings);
+
+    // 1000 km à 6 L/100 km = 60 L, à 2 €/L = 120 €
+    expect(stats.fuelLiters).toBe(60);
+    expect(stats.fuelCost).toBe(120);
+    expect(stats.commuteCost).toBe(180);
+  });
+
+  it('laisse le carburant hors du montant déclaré, déjà couvert par le barème', () => {
+    const months = [
+      monthStats(0, { onsiteDays: 10, workedDays: 10, km: 1000, toll: 60, totalDays: 31 }),
+    ];
+    const settings = { ...DEFAULT_SETTINGS, fuelConsumption: 6, fuelPricePerLiter: 2 };
+
+    const stats = computeYearStats(2026, months, settings);
+
+    expect(stats.totalDeclared).toBe(1969);
+  });
+
   it('évite toute division par zéro sans aucun trajet', () => {
     const stats = computeYearStats(2026, [monthStats(0, {})], DEFAULT_SETTINGS);
 

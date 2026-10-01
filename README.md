@@ -26,6 +26,10 @@ totaux, moyennes et graphiques recalculés en temps réel.
 - Barème kilométrique paramétrable : `(kilomètres × taux) + forfait`, réglé par défaut sur
   `(km × 0,394) + 1515`.
 - Montant total à déclarer : barème kilométrique + péages de l'année.
+- Budget carburant : `(kilomètres × consommation / 100) × prix au litre`. Le prix au litre se saisit
+  à la main ou se pré-remplit avec la moyenne SP98 du jour, relevée sur l'open data du ministère de
+  l'Économie. C'est un coût réel indicatif, distinct du montant déclaré : le barème kilométrique
+  couvre déjà le carburant de façon forfaitaire.
 
 **Données**
 
@@ -46,7 +50,7 @@ totaux, moyennes et graphiques recalculés en temps réel.
 | Chargement | Une route = un chunk différé (`loadComponent`)                                     |
 | Graphiques | SVG écrit à la main, `ResizeObserver` — aucune librairie de dataviz                |
 | Styles     | SCSS et variables CSS, thème sombre, zéro dépendance UI                            |
-| Tests      | Vitest, 48 tests sur la logique métier                                             |
+| Tests      | Vitest, 50 tests sur la logique métier                                             |
 
 Le modèle de données ne stocke que les journées qui s'écartent du calendrier déduit. Deux
 conséquences utiles : les données restent très compactes, et modifier une valeur par défaut (distance,
@@ -100,6 +104,7 @@ src/app/
 │   ├── services/
 │   │   ├── planning-store.ts       état applicatif, persistance SQLite, statistiques
 │   │   ├── planning-api.ts         lecture et écriture de /api/state
+│   │   ├── fuel-price.service.ts   relevé du prix moyen SP98 via /api/fuel-price
 │   │   ├── export.service.ts       générations CSV et JSON
 │   │   └── notification.service.ts notifications éphémères
 │   └── utils/                      dates, jours fériés, statistiques, formatage, fichiers

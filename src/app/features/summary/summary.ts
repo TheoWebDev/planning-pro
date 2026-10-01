@@ -1,8 +1,9 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ExportService } from '../../core/services/export.service';
 import { PlanningStore } from '../../core/services/planning-store';
 import { MONTH_LABELS } from '../../core/utils/date';
+import { fuelCostFor } from '../../core/utils/stats';
 
 @Component({
   selector: 'app-summary',
@@ -19,4 +20,17 @@ export class Summary {
   protected readonly settings = this.store.settings;
   protected readonly year = this.store.selectedYear;
   protected readonly monthLabels = MONTH_LABELS;
+
+  protected readonly fuelCostPerTrip = computed(() =>
+    fuelCostFor(this.stats().kmPerTrip, this.settings()),
+  );
+
+  /** Le carburant dépend des réglages, que `MonthStats` ne connaît pas. */
+  protected readonly rows = computed(() => {
+    const settings = this.settings();
+    return this.stats().months.map((month) => ({
+      ...month,
+      fuelCost: fuelCostFor(month.km, settings),
+    }));
+  });
 }

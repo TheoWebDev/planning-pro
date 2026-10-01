@@ -74,6 +74,18 @@
     unit="€"
     hint="Moyenne sur les mois avec activité"
   />
+  <app-kpi-card
+    label="Budget carburant"
+    [value]="stats().fuelCost | number: '1.2-2'"
+    unit="€"
+    [hint]="fuelHint()"
+  />
+  <app-kpi-card
+    label="Carburant par mois"
+    [value]="stats().fuelCostPerMonth | number: '1.2-2'"
+    unit="€"
+    hint="Moyenne sur les mois avec activité"
+  />
 </div>
 
 <h2 class="section-title">Déclaration fiscale</h2>
