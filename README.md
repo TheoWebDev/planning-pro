@@ -29,7 +29,9 @@ totaux, moyennes et graphiques recalculés en temps réel.
 
 **Données**
 
-- Stockage local (`localStorage`), sans compte ni serveur.
+- Base SQLite sur la machine (`data/planning.sqlite`), via Docker Compose. Chaque saisie y est
+  écrite automatiquement. Le fichier est partagé quel que soit le port du navigateur.
+- Reprise unique d'un ancien `localStorage` si la base est encore vide.
 - Sauvegarde et restauration au format JSON, exports CSV (récapitulatif mensuel et détail journalier)
   directement ouvrables dans Excel.
 
@@ -39,6 +41,7 @@ totaux, moyennes et graphiques recalculés en temps réel.
 | ---------- | ---------------------------------------------------------------------------------- |
 | Framework  | Angular 22, composants standalone, change detection **zoneless**                   |
 | État       | Signals (`signal`, `computed`, `linkedSignal`), store unique injectable            |
+| Données    | API Node.js (`node:sqlite`) et Docker Compose, volume `./data`                     |
 | Rendu      | `ChangeDetectionStrategy.OnPush`, nouveau flux de contrôle `@if` / `@for` / `@let` |
 | Chargement | Une route = un chunk différé (`loadComponent`)                                     |
 | Graphiques | SVG écrit à la main, `ResizeObserver` — aucune librairie de dataviz                |
@@ -51,20 +54,36 @@ péage, barème) se répercute immédiatement sur tout l'historique non surcharg
 
 ## Démarrage
 
-Angular 22 exige Node 22.22+ (ou 24.15+). Un fichier `.nvmrc` est fourni :
+Angular 22 exige Node 22.22+ (ou 24.15+). Un fichier `.nvmrc` est fourni. Docker sert la base
+SQLite et, en une commande, l'application déjà construite.
+
+```bash
+docker compose up --build   # http://localhost:8080
+```
+
+Le fichier `data/planning.sqlite` reste sur le disque après l'arrêt du conteneur. Docker doit
+être lancé pour que l'enregistrement fonctionne. Avec « Démarrer Docker au login », le conteneur
+(`restart: unless-stopped`) revient tout seul.
+
+Pour développer l'interface, laissez Compose démarré puis :
 
 ```bash
 nvm use            # bascule sur Node 22
 npm install
-npm start          # http://localhost:4200
+npm start          # http://localhost:4200, proxy /api vers le conteneur
 ```
+
+`npm start -- --port 4300` lit la même base. Si le conteneur est arrêté, l'accueil demande de le
+démarrer : les saisies ne partent vers SQLite que lorsque la base répond.
 
 ## Scripts
 
 ```bash
-npm start          # serveur de développement
+npm start          # serveur de développement (proxy vers la base)
+npm run server     # API SQLite seule, sans Docker, sur le port 8080
 npm run build      # build de production dans dist/
 npm test           # tests unitaires (Vitest)
+npm run test:server # tests de l'API SQLite
 npm run format     # formatage Prettier
 ```
 
@@ -75,7 +94,8 @@ src/app/
 ├── core/
 │   ├── models/planning.ts          types du domaine, natures de journée, réglages
 │   ├── services/
-│   │   ├── planning-store.ts       état applicatif, persistance, statistiques dérivées
+│   │   ├── planning-store.ts       état applicatif, persistance SQLite, statistiques
+│   │   ├── planning-api.ts         lecture et écriture de /api/state
 │   │   ├── export.service.ts       générations CSV et JSON
 │   │   └── notification.service.ts notifications éphémères
 │   └── utils/                      dates, jours fériés, statistiques, formatage, fichiers
@@ -94,8 +114,9 @@ lien d'évitement, contrastes conformes au thème sombre et respect de `prefers-
 
 ## Limites connues
 
-- Les données vivent dans le navigateur : vider le stockage du site les efface. L'export JSON sert de
-  sauvegarde.
+- Les données vivent dans `data/planning.sqlite`. Supprimer ce fichier ou le volume les efface.
+  L'export JSON sert de copie de secours.
+- L'application a besoin du conteneur (ou de `npm run server`) pour enregistrer.
 - Les jours fériés couvrent le régime général français (hors Alsace-Moselle et outre-mer).
 - Le barème kilométrique est volontairement paramétrable plutôt que codé en dur, car il évolue chaque
   année et dépend de la puissance fiscale du véhicule.

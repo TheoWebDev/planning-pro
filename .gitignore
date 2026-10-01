@@ -2,6 +2,9 @@
 
 # Compiled output
 /dist
+
+# Base SQLite locale (docker compose)
+/data
 /tmp
 /out-tsc
 /bazel-out

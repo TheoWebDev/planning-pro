@@ -2,10 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { routes } from './app.routes';
+import { PlanningStore } from './core/services/planning-store';
 
 describe('App', () => {
   beforeEach(async () => {
     localStorage.clear();
+    vi.stubGlobal('fetch', async () => {
+      return new Response(JSON.stringify({ state: null }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter(routes)],
@@ -14,6 +21,8 @@ describe('App', () => {
 
   it('affiche les quatre onglets de navigation', async () => {
     const fixture = TestBed.createComponent(App);
+    await TestBed.inject(PlanningStore).whenReady();
+    fixture.detectChanges();
     await fixture.whenStable();
 
     const tabs = (fixture.nativeElement as HTMLElement).querySelectorAll('.tab');
@@ -27,6 +36,8 @@ describe('App', () => {
 
   it('propose l’année courante dans le sélecteur', async () => {
     const fixture = TestBed.createComponent(App);
+    await TestBed.inject(PlanningStore).whenReady();
+    fixture.detectChanges();
     await fixture.whenStable();
 
     const select = (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(

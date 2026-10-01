@@ -1,0 +1,14 @@
+# Base SQLite locale et application. Les saisies vivent dans ./data,
+# pas dans le navigateur : le port d'accès ne change rien.
+services:
+  planning-pro:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      PORT: "8080"
+      DATABASE_PATH: /data/planning.sqlite
+      STATIC_DIR: /app/dist/planning-pro/browser
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

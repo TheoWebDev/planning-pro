@@ -55,4 +55,8 @@ export class App {
   protected onYearChange(value: string): void {
     this.store.selectYear(Number(value));
   }
+
+  protected retry(): void {
+    this.store.retry();
+  }
 }

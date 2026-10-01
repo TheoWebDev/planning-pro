@@ -1,15 +1,45 @@
 import { TestBed } from '@angular/core/testing';
+import { DEFAULT_SETTINGS } from '../models/planning';
 import { WORKWEEK } from '../utils/date';
 import { PlanningStore } from './planning-store';
+
+const remote = { raw: null as string | null };
+
+function installApi(): void {
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    if (!url.includes('/api/state')) {
+      return new Response('introuvable', { status: 404 });
+    }
+    if (init?.method === 'PUT') {
+      remote.raw = String(init.body ?? '');
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    const state = remote.raw ? (JSON.parse(remote.raw) as unknown) : null;
+    return new Response(JSON.stringify({ state }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  });
+}
 
 describe('PlanningStore', () => {
   let store: PlanningStore;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    remote.raw = null;
     localStorage.clear();
+    installApi();
     TestBed.resetTestingModule();
     store = TestBed.inject(PlanningStore);
+    await store.whenReady();
+    TestBed.tick();
     store.selectYear(2026);
+    TestBed.tick();
+    await store.whenSaved();
   });
 
   describe('résolution des journées', () => {
@@ -149,15 +179,49 @@ describe('PlanningStore', () => {
   });
 
   describe('persistance et import', () => {
-    it('relit l’état enregistré dans le localStorage', () => {
+    it('relit l’état enregistré dans SQLite', async () => {
       store.setDay('2026-03-02', { type: 'onsite', km: 95 });
-      // Déclenche l'effet de persistance.
       TestBed.tick();
+      await store.whenSaved();
 
       TestBed.resetTestingModule();
       const reloaded = TestBed.inject(PlanningStore);
+      await reloaded.whenReady();
 
       expect(reloaded.resolve('2026-03-02').km).toBe(95);
+    });
+
+    it('migre une saisie encore présente dans le navigateur', async () => {
+      localStorage.setItem(
+        'planning-pro:state:v1',
+        JSON.stringify({
+          version: 1,
+          settings: DEFAULT_SETTINGS,
+          days: { '2026-03-02': { type: 'onsite', km: 95 } },
+          selectedYear: 2026,
+        }),
+      );
+      remote.raw = null;
+      TestBed.resetTestingModule();
+      const migrated = TestBed.inject(PlanningStore);
+      await migrated.whenReady();
+      TestBed.tick();
+      await migrated.whenSaved();
+
+      expect(migrated.resolve('2026-03-02').km).toBe(95);
+      expect(remote.raw).toContain('2026-03-02');
+      expect(localStorage.getItem('planning-pro:state:v1')).toBeNull();
+    });
+
+    it('signale une base indisponible', async () => {
+      vi.stubGlobal('fetch', async () => {
+        throw new Error('offline');
+      });
+      TestBed.resetTestingModule();
+      const offline = TestBed.inject(PlanningStore);
+      await offline.whenReady();
+
+      expect(offline.status()).toBe('offline');
     });
 
     it('importe une sauvegarde valide', () => {

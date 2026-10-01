@@ -187,6 +187,51 @@
   padding: clamp(1rem, 2.5vw, 1.75rem) clamp(0.75rem, 3vw, 2rem) 3rem;
 }
 
+.sync {
+  margin-left: auto;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 55%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--danger) 16%, var(--surface));
+  color: var(--text);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.gate {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.gate__card {
+  width: min(100%, 36rem);
+}
+
+.gate__card h1 {
+  font-size: 1.35rem;
+}
+
+.gate__card p {
+  margin-top: 0.65rem;
+  color: var(--text-muted);
+}
+
+.gate__card pre {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.gate__card .btn {
+  margin-top: 1rem;
+}
+
 @media (max-width: 620px) {
   .brand__text small {
     display: none;

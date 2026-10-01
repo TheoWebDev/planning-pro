@@ -1,4 +1,4 @@
-import { computed, effect, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import {
   DEFAULT_SETTINGS,
   STATE_VERSION,
@@ -16,8 +16,12 @@ import {
   type MonthStats,
   type YearStats,
 } from '../utils/stats';
+import { PlanningApi } from './planning-api';
 
+/** Ancienne clé navigateur : lue une seule fois pour migrer vers SQLite. */
 const STORAGE_KEY = 'planning-pro:state:v1';
+
+export type StoreStatus = 'loading' | 'ready' | 'offline';
 
 export interface RangeOptions {
   /** Laisse inchangés les week-ends et jours fériés. */
@@ -28,11 +32,20 @@ export interface RangeOptions {
 
 /**
  * Source de vérité unique de l'application : réglages, journées saisies et année
- * sélectionnée. L'état est persisté dans le `localStorage` à chaque changement.
+ * sélectionnée. Chaque changement est écrit dans la base SQLite.
  */
 @Injectable({ providedIn: 'root' })
 export class PlanningStore {
-  private readonly state = signal<PlanningState>(loadState());
+  private readonly api = inject(PlanningApi);
+  private readonly state = signal<PlanningState>(createInitialState());
+  private readonly hydrated = signal(false);
+  private lastSaved = '';
+  private queued: PlanningState | null = null;
+  private drainPromise: Promise<void> | null = null;
+  private ready: Promise<void> = Promise.resolve();
+
+  readonly status = signal<StoreStatus>('loading');
+  readonly saveError = signal(false);
 
   readonly settings = computed(() => this.state().settings);
   readonly selectedYear = computed(() => this.state().selectedYear);
@@ -76,7 +89,39 @@ export class PlanningStore {
   );
 
   constructor() {
-    effect(() => persistState(this.state()));
+    effect(() => {
+      if (!this.hydrated()) {
+        return;
+      }
+      this.enqueueSave(this.state());
+    });
+    this.ready = this.hydrate();
+  }
+
+  /** Résolu quand la base a répondu, qu'elle soit disponible ou non. */
+  whenReady(): Promise<void> {
+    return this.ready;
+  }
+
+  /** Résolu quand la dernière écriture demandée s'est terminée. */
+  whenSaved(): Promise<void> {
+    return this.drainPromise ?? Promise.resolve();
+  }
+
+  /** Relance la lecture après un démarrage sans base. */
+  retry(): void {
+    if (this.status() === 'loading') {
+      return;
+    }
+    this.hydrated.set(false);
+    this.status.set('loading');
+    this.ready = this.hydrate();
+  }
+
+  /** Renvoie l'état courant vers SQLite après un échec d'écriture. */
+  retrySave(): void {
+    this.queued = this.state();
+    this.kickSave();
   }
 
   // ---------------------------------------------------------------- navigation
@@ -205,6 +250,70 @@ export class PlanningStore {
   resetAll(): void {
     this.state.set({ ...createInitialState(), selectedYear: this.selectedYear() });
   }
+
+  private async hydrate(): Promise<void> {
+    try {
+      const payload = await this.api.load();
+      if (payload !== null && payload !== undefined) {
+        const remote = normalizeState(payload);
+        this.lastSaved = JSON.stringify(remote);
+        this.state.set(remote);
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        const migrated = readLocalState();
+        if (migrated && hasUserData(migrated)) {
+          this.state.set(migrated);
+        } else {
+          this.lastSaved = JSON.stringify(this.state());
+        }
+      }
+      this.saveError.set(false);
+      this.hydrated.set(true);
+      this.status.set('ready');
+    } catch {
+      this.hydrated.set(false);
+      this.status.set('offline');
+    }
+  }
+
+  private enqueueSave(state: PlanningState): void {
+    if (JSON.stringify(state) === this.lastSaved) {
+      return;
+    }
+    this.queued = state;
+    this.kickSave();
+  }
+
+  private kickSave(): void {
+    if (this.drainPromise) {
+      return;
+    }
+    this.drainPromise = this.drain().finally(() => {
+      this.drainPromise = null;
+    });
+  }
+
+  private async drain(): Promise<void> {
+    while (this.queued) {
+      const state = this.queued;
+      this.queued = null;
+      const raw = JSON.stringify(state);
+      if (raw === this.lastSaved) {
+        continue;
+      }
+      try {
+        await this.api.save(state);
+        this.lastSaved = raw;
+        localStorage.removeItem(STORAGE_KEY);
+        this.saveError.set(false);
+      } catch {
+        this.saveError.set(true);
+        if (this.queued === null) {
+          return;
+        }
+      }
+    }
+  }
 }
 
 // -------------------------------------------------------------------- helpers
@@ -277,7 +386,7 @@ function createInitialState(): PlanningState {
 const VALID_TYPES = new Set<string>(['onsite', 'remote', 'leave', 'holiday', 'weekend', 'other']);
 const ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Valide et nettoie un état venant du `localStorage` ou d'un fichier importé. */
+/** Valide et nettoie un état venant de SQLite, du navigateur ou d'un fichier importé. */
 function normalizeState(input: unknown): PlanningState {
   const base = createInitialState();
   if (typeof input !== 'object' || input === null) {
@@ -347,19 +456,18 @@ function optionalNumber(value: unknown): number | undefined {
     : undefined;
 }
 
-function loadState(): PlanningState {
+function readLocalState(): PlanningState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? normalizeState(JSON.parse(raw)) : createInitialState();
+    return raw ? normalizeState(JSON.parse(raw)) : null;
   } catch {
-    return createInitialState();
+    return null;
   }
 }
 
-function persistState(state: PlanningState): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // Mode privé ou quota dépassé : l'application reste utilisable en mémoire.
-  }
+function hasUserData(state: PlanningState): boolean {
+  return (
+    Object.keys(state.days).length > 0 ||
+    JSON.stringify(state.settings) !== JSON.stringify(DEFAULT_SETTINGS)
+  );
 }
