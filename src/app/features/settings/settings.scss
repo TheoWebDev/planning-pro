@@ -1,0 +1,96 @@
+.page-head {
+  margin-bottom: 1.5rem;
+}
+
+.page-head h1 {
+  font-size: clamp(1.25rem, 1rem + 1.2vw, 1.65rem);
+}
+
+.page-head p {
+  max-width: 68ch;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.card__title {
+  margin-bottom: 0.4rem;
+}
+
+.card p.field__hint {
+  margin-bottom: 1rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.field + .field {
+  margin-top: 0.9rem;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 1rem 0;
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+}
+
+.preview code {
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.actions label.btn {
+  cursor: pointer;
+}
+
+.card--danger {
+  border-color: #4a2d2b;
+}
+
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  background: #2b1d1c;
+  border: 1px solid #5c3230;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.confirm__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 420px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

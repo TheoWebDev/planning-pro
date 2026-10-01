@@ -1,0 +1,208 @@
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-head h1 {
+  font-size: clamp(1.25rem, 1rem + 1.2vw, 1.65rem);
+}
+
+.page-head p {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.page-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.switch {
+  display: flex;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.switch button {
+  padding: 0.35rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.switch button:hover {
+  color: var(--text);
+}
+
+.switch--on {
+  background: var(--surface-3);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.tools-wrap {
+  margin-bottom: 1.25rem;
+}
+
+/* ------------------------------------------------------------------ légende */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* -------------------------------------------------------------- vue annuelle */
+
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.month-card {
+  padding: 0.8rem 0.9rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.month-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.month-card__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.month-card__head:hover .month-card__name {
+  color: var(--accent-text);
+}
+
+.month-card__badge {
+  padding: 0.1rem 0.45rem;
+  background: color-mix(in srgb, var(--c-onsite) 26%, var(--surface-2));
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- vue mensuelle */
+
+.month-view {
+  padding: 1rem 1.1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.month-view__head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.month-view__head h2 {
+  min-width: 11rem;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.month-view__head .btn {
+  padding: 0.2rem 0.65rem;
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+
+.month-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.month-stats dt {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+}
+
+.month-stats dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------- voile */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  border: none;
+  background: rgb(0 0 0 / 55%);
+  cursor: pointer;
+  animation: fade-in 0.15s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .year-grid {
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .month-card {
+    padding: 0.6rem;
+  }
+}

@@ -1,0 +1,145 @@
+:host {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: min(380px, 100vw);
+  padding: 1.25rem;
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: -16px 0 40px -20px rgb(0 0 0 / 70%);
+  overflow-y: auto;
+  animation: slide-in 0.18s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+}
+
+.editor__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.editor__head h2 {
+  font-size: 1rem;
+  text-transform: capitalize;
+}
+
+.editor__holiday {
+  margin-top: 0.2rem;
+  color: var(--c-holiday);
+  font-size: 0.8rem;
+}
+
+.editor__close {
+  flex: none;
+  padding: 0.25rem 0.5rem;
+}
+
+.editor__nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editor__nav .btn {
+  flex: 1;
+}
+
+.editor__block {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.editor__block legend {
+  padding: 0;
+  margin-bottom: 0.55rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.editor__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+/* --------------------------------------------------------------------- chips */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.83rem;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.chip:hover {
+  background: var(--surface-2);
+}
+
+.chip--active {
+  background: color-mix(in srgb, var(--chip-color) 30%, var(--surface-2));
+  border-color: var(--chip-color);
+  font-weight: 500;
+}
+
+.chip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chip-color);
+}
+
+.editor__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  :host {
+    top: auto;
+    left: 0;
+    width: 100%;
+    max-height: 88dvh;
+    border-left: none;
+    border-top: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation-name: slide-up;
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+  }
+}

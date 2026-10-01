@@ -1,0 +1,365 @@
+import { computed, effect, Injectable, signal } from '@angular/core';
+import {
+  DEFAULT_SETTINGS,
+  STATE_VERSION,
+  type DayEntry,
+  type DayType,
+  type PlanningSettings,
+  type PlanningState,
+  type ResolvedDay,
+} from '../models/planning';
+import { fromIso, isoListBetween, isoListOfMonth, toIso, weekdayIndex } from '../utils/date';
+import { frenchHolidays } from '../utils/holidays';
+import {
+  computeMonthStats,
+  computeYearStats,
+  type MonthStats,
+  type YearStats,
+} from '../utils/stats';
+
+const STORAGE_KEY = 'planning-pro:state:v1';
+
+export interface RangeOptions {
+  /** Laisse inchangés les week-ends et jours fériés. */
+  readonly skipNonWorkingDays: boolean;
+  /** Laisse inchangées les journées déjà saisies manuellement. */
+  readonly keepExistingEntries: boolean;
+}
+
+/**
+ * Source de vérité unique de l'application : réglages, journées saisies et année
+ * sélectionnée. L'état est persisté dans le `localStorage` à chaque changement.
+ */
+@Injectable({ providedIn: 'root' })
+export class PlanningStore {
+  private readonly state = signal<PlanningState>(loadState());
+
+  readonly settings = computed(() => this.state().settings);
+  readonly selectedYear = computed(() => this.state().selectedYear);
+  readonly entryCount = computed(() => Object.keys(this.state().days).length);
+
+  /** Années disponibles dans le sélecteur : année courante ± 3, plus celles saisies. */
+  readonly availableYears = computed(() => {
+    const current = new Date().getFullYear();
+    const years = new Set<number>([this.selectedYear()]);
+    for (let year = current - 3; year <= current + 3; year++) {
+      years.add(year);
+    }
+    for (const iso of Object.keys(this.state().days)) {
+      years.add(fromIso(iso).getFullYear());
+    }
+    return [...years].sort((a, b) => a - b);
+  });
+
+  private readonly holidays = computed(() => frenchHolidays(this.selectedYear()));
+
+  /** Les 365/366 journées de l'année sélectionnée, groupées par mois. */
+  readonly monthDays = computed<ResolvedDay[][]>(() => {
+    const year = this.selectedYear();
+    const { days, settings } = this.state();
+    const holidays = this.holidays();
+    const today = toIso(new Date());
+
+    return Array.from({ length: 12 }, (_, month) =>
+      isoListOfMonth(year, month).map((iso) =>
+        resolveDay(iso, days[iso], settings, holidays, today),
+      ),
+    );
+  });
+
+  readonly days = computed<ResolvedDay[]>(() => this.monthDays().flat());
+
+  readonly monthStats = computed<MonthStats[]>(() => computeMonthStats(this.monthDays()));
+
+  readonly yearStats = computed<YearStats>(() =>
+    computeYearStats(this.selectedYear(), this.monthStats(), this.settings()),
+  );
+
+  constructor() {
+    effect(() => persistState(this.state()));
+  }
+
+  // ---------------------------------------------------------------- navigation
+
+  selectYear(year: number): void {
+    this.state.update((state) => ({ ...state, selectedYear: year }));
+  }
+
+  // ------------------------------------------------------------------ journées
+
+  /** Renvoie la journée calculée pour une date ISO, même hors année sélectionnée. */
+  resolve(iso: string): ResolvedDay {
+    const { days, settings } = this.state();
+    const year = fromIso(iso).getFullYear();
+    const holidays = year === this.selectedYear() ? this.holidays() : frenchHolidays(year);
+    return resolveDay(iso, days[iso], settings, holidays, toIso(new Date()));
+  }
+
+  setDay(iso: string, patch: Partial<DayEntry>): void {
+    this.state.update((state) => {
+      const current: DayEntry = state.days[iso] ?? { type: this.resolve(iso).type };
+      const next: DayEntry = { ...current, ...patch };
+      return { ...state, days: { ...state.days, [iso]: stripDefaults(next) } };
+    });
+  }
+
+  /** Supprime la saisie : la journée repasse sur les valeurs déduites du calendrier. */
+  clearDay(iso: string): void {
+    this.state.update((state) => {
+      if (!(iso in state.days)) {
+        return state;
+      }
+      const days = { ...state.days };
+      delete days[iso];
+      return { ...state, days };
+    });
+  }
+
+  /** Applique un type à toutes les dates d'un intervalle (bornes incluses). */
+  applyToRange(
+    fromIsoDate: string,
+    toIsoDate: string,
+    type: DayType,
+    options: RangeOptions,
+  ): number {
+    return this.applyToDates(isoListBetween(fromIsoDate, toIsoDate), type, options);
+  }
+
+  /**
+   * Applique un type aux jours de la semaine choisis (0 = lundi) sur l'année
+   * sélectionnée, ou sur un seul mois.
+   */
+  applyWeeklyPattern(
+    weekdays: readonly number[],
+    type: DayType,
+    options: RangeOptions,
+    month?: number,
+  ): number {
+    const year = this.selectedYear();
+    const months = month === undefined ? Array.from({ length: 12 }, (_, index) => index) : [month];
+    const targets = months
+      .flatMap((index) => isoListOfMonth(year, index))
+      .filter((iso) => weekdays.includes(weekdayIndex(fromIso(iso))));
+    return this.applyToDates(targets, type, options);
+  }
+
+  private applyToDates(isoDates: readonly string[], type: DayType, options: RangeOptions): number {
+    let applied = 0;
+    this.state.update((state) => {
+      const days = { ...state.days };
+      for (const iso of isoDates) {
+        const resolved = this.resolve(iso);
+        if (
+          options.skipNonWorkingDays &&
+          (resolved.type === 'weekend' || resolved.type === 'holiday')
+        ) {
+          continue;
+        }
+        if (options.keepExistingEntries && resolved.isOverridden) {
+          continue;
+        }
+        days[iso] = stripDefaults({ ...days[iso], type });
+        applied++;
+      }
+      return applied ? { ...state, days } : state;
+    });
+    return applied;
+  }
+
+  // ------------------------------------------------------------------ réglages
+
+  updateSettings(patch: Partial<PlanningSettings>): void {
+    this.state.update((state) => ({ ...state, settings: { ...state.settings, ...patch } }));
+  }
+
+  // -------------------------------------------------------------------- données
+
+  snapshot(): PlanningState {
+    return this.state();
+  }
+
+  /** Remplace l'état complet depuis un export JSON. Lève une erreur si invalide. */
+  importState(raw: string): void {
+    const parsed: unknown = JSON.parse(raw);
+    this.state.set(normalizeState(parsed));
+  }
+
+  /** Supprime les saisies d'une année, en conservant les réglages. */
+  resetYear(year: number): number {
+    const prefix = `${year}-`;
+    let removed = 0;
+    this.state.update((state) => {
+      const days: Record<string, DayEntry> = {};
+      for (const [iso, entry] of Object.entries(state.days)) {
+        if (iso.startsWith(prefix)) {
+          removed++;
+        } else {
+          days[iso] = entry;
+        }
+      }
+      return removed ? { ...state, days } : state;
+    });
+    return removed;
+  }
+
+  resetAll(): void {
+    this.state.set({ ...createInitialState(), selectedYear: this.selectedYear() });
+  }
+}
+
+// -------------------------------------------------------------------- helpers
+
+function resolveDay(
+  iso: string,
+  entry: DayEntry | undefined,
+  settings: PlanningSettings,
+  holidays: ReadonlyMap<string, string>,
+  todayIso: string,
+): ResolvedDay {
+  const date = fromIso(iso);
+  const weekday = weekdayIndex(date);
+  const holidayName = holidays.get(iso) ?? null;
+
+  let type: DayType;
+  if (entry) {
+    type = entry.type;
+  } else if (weekday >= 5) {
+    type = 'weekend';
+  } else if (holidayName) {
+    type = 'holiday';
+  } else {
+    type = settings.defaultWeekdayType;
+  }
+
+  const commutes = type === 'onsite';
+  return {
+    iso,
+    year: date.getFullYear(),
+    month: date.getMonth(),
+    dayOfMonth: date.getDate(),
+    weekday,
+    type,
+    km: commutes ? (entry?.km ?? settings.defaultKm) : 0,
+    toll: commutes ? (entry?.toll ?? settings.defaultToll) : 0,
+    note: entry?.note ?? '',
+    holidayName,
+    isOverridden: entry !== undefined,
+    isToday: iso === todayIso,
+  };
+}
+
+/** Retire les champs vides pour ne pas figer inutilement les valeurs par défaut. */
+function stripDefaults(entry: DayEntry): DayEntry {
+  const result: { type: DayType; km?: number; toll?: number; note?: string } = { type: entry.type };
+  if (entry.type === 'onsite') {
+    if (typeof entry.km === 'number' && Number.isFinite(entry.km)) {
+      result.km = entry.km;
+    }
+    if (typeof entry.toll === 'number' && Number.isFinite(entry.toll)) {
+      result.toll = entry.toll;
+    }
+  }
+  if (entry.note?.trim()) {
+    result.note = entry.note.trim();
+  }
+  return result;
+}
+
+function createInitialState(): PlanningState {
+  return {
+    version: STATE_VERSION,
+    settings: DEFAULT_SETTINGS,
+    days: {},
+    selectedYear: new Date().getFullYear(),
+  };
+}
+
+const VALID_TYPES = new Set<string>(['onsite', 'remote', 'leave', 'holiday', 'weekend', 'other']);
+const ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Valide et nettoie un état venant du `localStorage` ou d'un fichier importé. */
+function normalizeState(input: unknown): PlanningState {
+  const base = createInitialState();
+  if (typeof input !== 'object' || input === null) {
+    throw new Error('Fichier invalide : objet JSON attendu.');
+  }
+  const raw = input as Partial<Record<keyof PlanningState, unknown>>;
+
+  const settings: PlanningSettings = {
+    defaultKm: positiveNumber(readProp(raw.settings, 'defaultKm'), base.settings.defaultKm),
+    defaultToll: positiveNumber(readProp(raw.settings, 'defaultToll'), base.settings.defaultToll),
+    defaultWeekdayType:
+      readProp(raw.settings, 'defaultWeekdayType') === 'onsite' ? 'onsite' : 'remote',
+    taxRatePerKm: positiveNumber(
+      readProp(raw.settings, 'taxRatePerKm'),
+      base.settings.taxRatePerKm,
+    ),
+    taxFixedAmount: positiveNumber(
+      readProp(raw.settings, 'taxFixedAmount'),
+      base.settings.taxFixedAmount,
+    ),
+  };
+
+  const days: Record<string, DayEntry> = {};
+  const rawDays = raw.days;
+  if (typeof rawDays === 'object' && rawDays !== null) {
+    for (const [iso, value] of Object.entries(rawDays as Record<string, unknown>)) {
+      const type = readProp(value, 'type');
+      if (!ISO_PATTERN.test(iso) || typeof type !== 'string' || !VALID_TYPES.has(type)) {
+        continue;
+      }
+      days[iso] = stripDefaults({
+        type: type as DayType,
+        km: optionalNumber(readProp(value, 'km')),
+        toll: optionalNumber(readProp(value, 'toll')),
+        note:
+          typeof readProp(value, 'note') === 'string'
+            ? (readProp(value, 'note') as string)
+            : undefined,
+      });
+    }
+  }
+
+  const year = Number(raw.selectedYear);
+  return {
+    version: STATE_VERSION,
+    settings,
+    days,
+    selectedYear: Number.isInteger(year) && year >= 1970 && year <= 2200 ? year : base.selectedYear,
+  };
+}
+
+function readProp(source: unknown, key: string): unknown {
+  return typeof source === 'object' && source !== null
+    ? (source as Record<string, unknown>)[key]
+    : undefined;
+}
+
+function positiveNumber(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function optionalNumber(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return value !== null && value !== undefined && Number.isFinite(parsed) && parsed >= 0
+    ? parsed
+    : undefined;
+}
+
+function loadState(): PlanningState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? normalizeState(JSON.parse(raw)) : createInitialState();
+  } catch {
+    return createInitialState();
+  }
+}
+
+function persistState(state: PlanningState): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Mode privé ou quota dépassé : l'application reste utilisable en mémoire.
+  }
+}

@@ -1,0 +1,136 @@
+<div class="page-head">
+  <div>
+    <h1>Calendrier {{ store.selectedYear() }}</h1>
+    <p class="muted">
+      Cliquez sur une journée pour en changer la nature, les kilomètres ou le péage.
+    </p>
+  </div>
+
+  <div class="page-head__actions">
+    <div class="switch" role="group" aria-label="Mode d’affichage">
+      <button type="button" [class.switch--on]="view() === 'year'" (click)="setView('year')">
+        Année
+      </button>
+      <button type="button" [class.switch--on]="view() === 'month'" (click)="setView('month')">
+        Mois
+      </button>
+    </div>
+    <button
+      type="button"
+      class="btn"
+      [class.btn--primary]="toolsOpen()"
+      [attr.aria-expanded]="toolsOpen()"
+      (click)="toolsOpen.set(!toolsOpen())"
+    >
+      Remplissage rapide
+    </button>
+  </div>
+</div>
+
+@if (toolsOpen()) {
+  <div class="tools-wrap">
+    <app-quick-fill [activeMonth]="activeMonth()" />
+  </div>
+}
+
+<ul class="legend">
+  @for (type of legend; track type.id) {
+    <li><i [style.background]="type.color"></i>{{ type.label }}</li>
+  }
+</ul>
+
+@if (view() === 'year') {
+  <div class="year-grid">
+    @for (days of store.monthDays(); track $index) {
+      <section class="month-card">
+        <button
+          type="button"
+          class="month-card__head"
+          [attr.aria-label]="'Détailler ' + monthLabels[$index] + ' ' + store.selectedYear()"
+          (click)="openMonth($index)"
+        >
+          <span class="month-card__name">{{ monthLabels[$index] }}</span>
+          @let onsite = store.monthStats()[$index].onsiteDays;
+          @if (onsite > 0) {
+            <span class="month-card__badge">{{ onsite }} sur site</span>
+          }
+        </button>
+        <app-month-grid
+          [month]="$index"
+          [days]="days"
+          [compact]="true"
+          [selectedIso]="selectedIso()"
+          (daySelected)="selectDay($event)"
+        />
+      </section>
+    }
+  </div>
+} @else {
+  <div class="month-view">
+    <header class="month-view__head">
+      <button
+        type="button"
+        class="btn btn--sm"
+        (click)="shiftMonth(-1)"
+        aria-label="Mois précédent"
+      >
+        ‹
+      </button>
+      <h2>{{ monthLabels[activeMonth()] }} {{ store.selectedYear() }}</h2>
+      <button type="button" class="btn btn--sm" (click)="shiftMonth(1)" aria-label="Mois suivant">
+        ›
+      </button>
+    </header>
+
+    @let stats = activeMonthStats();
+    @if (stats) {
+      <dl class="month-stats">
+        <div>
+          <dt>Travaillés</dt>
+          <dd>{{ stats.workedDays }} j</dd>
+        </div>
+        <div>
+          <dt>Sur site</dt>
+          <dd>{{ stats.onsiteDays }} j</dd>
+        </div>
+        <div>
+          <dt>Télétravail</dt>
+          <dd>{{ stats.remoteDays }} j</dd>
+        </div>
+        <div>
+          <dt>Congés</dt>
+          <dd>{{ stats.leaveDays }} j</dd>
+        </div>
+        <div>
+          <dt>Kilomètres</dt>
+          <dd>{{ stats.km | number: '1.0-0' }} km</dd>
+        </div>
+        <div>
+          <dt>Péages</dt>
+          <dd>{{ stats.toll | number: '1.2-2' }} €</dd>
+        </div>
+      </dl>
+    }
+
+    <app-month-grid
+      [month]="activeMonth()"
+      [days]="activeMonthDays()"
+      [selectedIso]="selectedIso()"
+      (daySelected)="selectDay($event)"
+    />
+  </div>
+}
+
+@if (selectedIso(); as iso) {
+  <button
+    type="button"
+    class="backdrop"
+    aria-label="Fermer l’éditeur"
+    (click)="selectedIso.set(null)"
+  ></button>
+  <app-day-editor
+    [iso]="iso"
+    (closed)="selectedIso.set(null)"
+    (isoChange)="moveSelection($event)"
+  />
+}

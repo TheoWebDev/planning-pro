@@ -1,0 +1,97 @@
+<header class="editor__head">
+  <div>
+    <h2>{{ title() }}</h2>
+    @if (day().holidayName) {
+      <p class="editor__holiday">{{ day().holidayName }} — jour férié</p>
+    }
+  </div>
+  <button
+    type="button"
+    class="btn btn--ghost editor__close"
+    (click)="closed.emit()"
+    aria-label="Fermer le panneau"
+  >
+    ✕
+  </button>
+</header>
+
+<div class="editor__nav">
+  <button type="button" class="btn btn--sm" (click)="shiftDay(-1)">‹ Jour précédent</button>
+  <button type="button" class="btn btn--sm" (click)="shiftDay(1)">Jour suivant ›</button>
+</div>
+
+<fieldset class="editor__block">
+  <legend>Nature de la journée</legend>
+  <div class="chips">
+    @for (type of dayTypes; track type.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.chip--active]="day().type === type.id"
+        [style.--chip-color]="type.color"
+        [attr.aria-pressed]="day().type === type.id"
+        (click)="setType(type.id)"
+      >
+        <i class="chip__dot"></i>
+        {{ type.label }}
+      </button>
+    }
+  </div>
+</fieldset>
+
+@if (day().type === 'onsite') {
+  <fieldset class="editor__block">
+    <legend>Trajet du jour</legend>
+    <div class="editor__pair">
+      <div class="field">
+        <label for="day-km">Distance aller-retour (km)</label>
+        <input
+          id="day-km"
+          type="number"
+          min="0"
+          step="1"
+          inputmode="decimal"
+          [value]="day().km"
+          (change)="setKm($any($event.target).value)"
+        />
+      </div>
+      <div class="field">
+        <label for="day-toll">Péage aller-retour (€)</label>
+        <input
+          id="day-toll"
+          type="number"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          [value]="day().toll"
+          (change)="setToll($any($event.target).value)"
+        />
+      </div>
+    </div>
+    <p class="field__hint">
+      Laissez un champ vide pour appliquer les valeurs par défaut des réglages ({{
+        settings().defaultKm
+      }}
+      km, {{ settings().defaultToll }} €).
+    </p>
+  </fieldset>
+}
+
+<div class="field editor__block">
+  <label for="day-note">Note</label>
+  <input
+    id="day-note"
+    type="text"
+    maxlength="80"
+    placeholder="Réunion client, déplacement exceptionnel…"
+    [value]="day().note"
+    (change)="setNote($any($event.target).value)"
+  />
+</div>
+
+<footer class="editor__foot">
+  <button type="button" class="btn btn--danger" [disabled]="!day().isOverridden" (click)="reset()">
+    Effacer la saisie
+  </button>
+  <button type="button" class="btn btn--primary" (click)="closed.emit()">Terminé</button>
+</footer>

@@ -1,0 +1,38 @@
+<div class="grid__weekdays" aria-hidden="true">
+  @for (label of weekdays(); track $index) {
+    <span>{{ label }}</span>
+  }
+</div>
+
+<div class="grid__days">
+  @for (blank of blanks(); track $index) {
+    <span class="cell cell--blank"></span>
+  }
+  @for (day of days(); track day.iso) {
+    <button
+      type="button"
+      class="cell"
+      [class.cell--weekend]="day.type === 'weekend'"
+      [class.cell--today]="day.isToday"
+      [class.cell--selected]="day.iso === selectedIso()"
+      [class.cell--custom]="day.isOverridden"
+      [style.--cell-color]="types[day.type].color"
+      [attr.aria-label]="ariaLabel(day)"
+      [attr.aria-pressed]="day.iso === selectedIso()"
+      [title]="day.holidayName ?? types[day.type].label"
+      (click)="daySelected.emit(day.iso)"
+    >
+      <span class="cell__num">{{ day.dayOfMonth }}</span>
+      @if (!compact()) {
+        <span class="cell__type">{{ types[day.type].label }}</span>
+        @if (day.type === 'onsite') {
+          <span class="cell__trip">{{ day.km }} km · {{ day.toll }} €</span>
+        } @else if (day.holidayName) {
+          <span class="cell__trip cell__trip--note">{{ day.holidayName }}</span>
+        } @else if (day.note) {
+          <span class="cell__trip cell__trip--note">{{ day.note }}</span>
+        }
+      }
+    </button>
+  }
+</div>

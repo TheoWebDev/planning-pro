@@ -1,0 +1,163 @@
+<div class="page-head">
+  <h1>Réglages</h1>
+  <p class="muted">
+    Vos données restent sur cet appareil, dans le stockage local du navigateur. Pensez à exporter
+    une sauvegarde régulièrement.
+  </p>
+</div>
+
+<div class="settings">
+  <section class="card">
+    <h2 class="card__title">Trajet par défaut</h2>
+    <p class="field__hint">
+      Valeurs appliquées à chaque journée sur site. Une journée peut toujours être ajustée
+      individuellement depuis le calendrier.
+    </p>
+    <div class="grid-2">
+      <div class="field">
+        <label for="default-km">Distance aller-retour (km)</label>
+        <input
+          id="default-km"
+          type="number"
+          min="0"
+          step="1"
+          [value]="settings().defaultKm"
+          (input)="updateNumber('defaultKm', $any($event.target).value)"
+        />
+      </div>
+      <div class="field">
+        <label for="default-toll">Péage aller-retour (€)</label>
+        <input
+          id="default-toll"
+          type="number"
+          min="0"
+          step="0.01"
+          [value]="settings().defaultToll"
+          (input)="updateNumber('defaultToll', $any($event.target).value)"
+        />
+      </div>
+    </div>
+    <div class="field">
+      <label for="default-weekday">Nature des jours ouvrés non saisis</label>
+      <select id="default-weekday" (change)="updateWeekdayType($any($event.target).value)">
+        <option value="remote" [selected]="settings().defaultWeekdayType === 'remote'">
+          Télétravail
+        </option>
+        <option value="onsite" [selected]="settings().defaultWeekdayType === 'onsite'">
+          Sur site
+        </option>
+      </select>
+      <span class="field__hint">
+        Les week-ends et les 11 jours fériés français sont déduits automatiquement du calendrier.
+      </span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="card__title">Barème kilométrique</h2>
+    <p class="field__hint">
+      Formule utilisée pour la déclaration : (kilomètres × taux) + forfait. Adaptez les valeurs au
+      barème de votre puissance fiscale.
+    </p>
+    <div class="grid-2">
+      <div class="field">
+        <label for="tax-rate">Taux par kilomètre (€)</label>
+        <input
+          id="tax-rate"
+          type="number"
+          min="0"
+          step="0.001"
+          [value]="settings().taxRatePerKm"
+          (input)="updateNumber('taxRatePerKm', $any($event.target).value)"
+        />
+      </div>
+      <div class="field">
+        <label for="tax-fixed">Forfait annuel (€)</label>
+        <input
+          id="tax-fixed"
+          type="number"
+          min="0"
+          step="1"
+          [value]="settings().taxFixedAmount"
+          (input)="updateNumber('taxFixedAmount', $any($event.target).value)"
+        />
+      </div>
+    </div>
+    <p class="preview">
+      <span class="faint">Appliqué à {{ year() }}</span>
+      <code>
+        ({{ stats().km | number: '1.0-0' }} × {{ settings().taxRatePerKm | number: '1.0-3' }}) +
+        {{ settings().taxFixedAmount | number: '1.0-0' }} =
+        {{ stats().taxDeduction | number: '1.2-2' }} €
+      </code>
+    </p>
+    <button
+      type="button"
+      class="btn btn--sm"
+      [disabled]="isDefaultScale()"
+      (click)="restoreDefaultScale()"
+    >
+      Rétablir 0,394 et 1 515
+    </button>
+  </section>
+
+  <section class="card">
+    <h2 class="card__title">Sauvegarde et exports</h2>
+    <p class="field__hint">
+      {{ entryCount() }} journée(s) enregistrée(s), toutes années confondues.
+    </p>
+    <div class="actions">
+      <button type="button" class="btn btn--primary" (click)="exporter.downloadBackup()">
+        Exporter la sauvegarde (JSON)
+      </button>
+      <label class="btn">
+        Importer une sauvegarde
+        <input
+          type="file"
+          accept="application/json,.json"
+          class="sr-only"
+          (change)="onImport($event)"
+        />
+      </label>
+      <button type="button" class="btn" (click)="exporter.downloadSummaryCsv()">
+        Récapitulatif (CSV)
+      </button>
+      <button type="button" class="btn" (click)="exporter.downloadDaysCsv()">
+        Détail journalier (CSV)
+      </button>
+    </div>
+    <p class="field__hint">L’import remplace l’intégralité des données actuelles.</p>
+  </section>
+
+  <section class="card card--danger">
+    <h2 class="card__title">Réinitialisation</h2>
+    <div class="actions">
+      <button type="button" class="btn btn--danger" (click)="requestReset('year')">
+        Effacer les saisies {{ year() }}
+      </button>
+      <button type="button" class="btn btn--danger" (click)="requestReset('all')">
+        Tout effacer
+      </button>
+    </div>
+    @if (pendingAction(); as action) {
+      <div class="confirm" role="alert">
+        <span>
+          @if (action === 'year') {
+            Effacer définitivement les journées saisies pour {{ year() }} ? Les réglages sont
+            conservés.
+          } @else {
+            Effacer définitivement toutes les journées et réglages de toutes les années ?
+          }
+        </span>
+        <div class="confirm__actions">
+          <button type="button" class="btn btn--sm" (click)="pendingAction.set(null)">
+            Annuler
+          </button>
+          <button type="button" class="btn btn--sm btn--danger" (click)="confirmReset()">
+            Confirmer
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+</div>

@@ -1,0 +1,61 @@
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<header class="topbar">
+  <div class="topbar__row">
+    <a class="brand" routerLink="/tableau-de-bord">
+      <span class="brand__mark" aria-hidden="true">PP</span>
+      <span class="brand__text">
+        <strong>Planning Pro</strong>
+        <small>Temps de travail &amp; trajets</small>
+      </span>
+    </a>
+
+    <div class="year" role="group" aria-label="Année affichée">
+      <button
+        type="button"
+        class="year__step"
+        (click)="shiftYear(-1)"
+        aria-label="Année précédente"
+      >
+        ‹
+      </button>
+      <label class="sr-only" for="year-select">Année</label>
+      <select
+        id="year-select"
+        class="year__select"
+        (change)="onYearChange($any($event.target).value)"
+      >
+        @for (year of store.availableYears(); track year) {
+          <option [value]="year" [selected]="year === store.selectedYear()">{{ year }}</option>
+        }
+      </select>
+      <button type="button" class="year__step" (click)="shiftYear(1)" aria-label="Année suivante">
+        ›
+      </button>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Navigation principale">
+    @for (link of links; track link.path) {
+      <a
+        class="tab"
+        [routerLink]="link.path"
+        routerLinkActive="tab--active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        ariaCurrentWhenActive="page"
+      >
+        <svg class="tab__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path [attr.d]="link.icon" />
+        </svg>
+        <span class="tab__label">{{ link.label }}</span>
+        <span class="tab__label-short">{{ link.short }}</span>
+      </a>
+    }
+  </nav>
+</header>
+
+<main id="contenu" class="content">
+  <router-outlet />
+</main>
+
+<app-toast-host />

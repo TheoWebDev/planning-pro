@@ -1,0 +1,119 @@
+<div class="tools">
+  <section class="tool">
+    <h3 class="tool__title">Rythme hebdomadaire</h3>
+    <p class="field__hint">
+      Applique un type aux mêmes jours chaque semaine, par exemple vos jours sur site.
+    </p>
+
+    <div class="weekdays" role="group" aria-label="Jours de la semaine">
+      @for (index of workweek; track index) {
+        <button
+          type="button"
+          class="weekday"
+          [class.weekday--on]="selectedWeekdays().includes(index)"
+          [attr.aria-pressed]="selectedWeekdays().includes(index)"
+          (click)="toggleWeekday(index)"
+        >
+          {{ weekdayLabels[index] }}
+        </button>
+      }
+    </div>
+
+    <div class="tool__row">
+      <div class="field">
+        <label for="pattern-type">Type appliqué</label>
+        <select id="pattern-type" (change)="patternType.set($any($event.target).value)">
+          @for (type of dayTypes; track type.id) {
+            <option [value]="type.id" [selected]="type.id === patternType()">
+              {{ type.label }}
+            </option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="pattern-scope">Portée</label>
+        <select id="pattern-scope" (change)="patternScope.set($any($event.target).value)">
+          <option value="year" [selected]="patternScope() === 'year'">
+            Toute l’année {{ year() }}
+          </option>
+          <option value="month" [selected]="patternScope() === 'month'">
+            {{ activeMonthLabel() }} {{ year() }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="applyPattern()">
+      Appliquer le rythme
+    </button>
+  </section>
+
+  <section class="tool">
+    <h3 class="tool__title">Période</h3>
+    <p class="field__hint">Pratique pour vos congés ou un déplacement de plusieurs jours.</p>
+
+    <div class="tool__row">
+      <div class="field">
+        <label for="range-from">Du</label>
+        <input
+          id="range-from"
+          type="date"
+          [value]="rangeFrom()"
+          [min]="yearStart()"
+          [max]="yearEnd()"
+          (change)="rangeFrom.set($any($event.target).value)"
+        />
+      </div>
+      <div class="field">
+        <label for="range-to">Au</label>
+        <input
+          id="range-to"
+          type="date"
+          [value]="rangeTo()"
+          [min]="yearStart()"
+          [max]="yearEnd()"
+          (change)="rangeTo.set($any($event.target).value)"
+        />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="range-type">Type appliqué</label>
+      <select id="range-type" (change)="rangeType.set($any($event.target).value)">
+        @for (type of dayTypes; track type.id) {
+          <option [value]="type.id" [selected]="type.id === rangeType()">{{ type.label }}</option>
+        }
+      </select>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="applyRange()">
+      Appliquer à la période
+    </button>
+  </section>
+
+  <section class="tool">
+    <h3 class="tool__title">Options</h3>
+    <label class="check">
+      <input
+        type="checkbox"
+        [checked]="skipNonWorkingDays()"
+        (change)="skipNonWorkingDays.set($any($event.target).checked)"
+      />
+      <span>
+        Ignorer les week-ends et jours fériés
+        <small class="faint">Recommandé : préserve le calendrier légal.</small>
+      </span>
+    </label>
+    <label class="check">
+      <input
+        type="checkbox"
+        [checked]="keepExistingEntries()"
+        (change)="keepExistingEntries.set($any($event.target).checked)"
+      />
+      <span>
+        Conserver mes journées déjà saisies
+        <small class="faint">Décoché, le remplissage écrase les saisies manuelles.</small>
+      </span>
+    </label>
+  </section>
+</div>

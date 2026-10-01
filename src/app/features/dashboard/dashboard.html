@@ -1,0 +1,143 @@
+<div class="page-head">
+  <div>
+    <h1>Tableau de bord {{ year() }}</h1>
+    <p class="muted">Synthèse de vos journées de travail, de vos trajets et de leur coût.</p>
+  </div>
+  <a class="btn" routerLink="/calendrier">Modifier le calendrier</a>
+</div>
+
+@if (!hasActivity()) {
+  <div class="hint-card">
+    <strong>Aucun jour sur site n’est encore déclaré pour {{ year() }}.</strong>
+    <p class="muted">
+      Ouvrez le calendrier pour marquer vos journées sur site : l’assistant de remplissage applique
+      vos jours habituels sur l’année entière en une seule fois.
+    </p>
+    <a class="btn btn--primary" routerLink="/calendrier">Remplir le calendrier</a>
+  </div>
+}
+
+<h2 class="section-title">Activité</h2>
+<div class="kpi-grid">
+  <app-kpi-card
+    label="Jours travaillés"
+    [value]="stats().workedDays"
+    unit="j"
+    hint="Sur site + télétravail"
+  />
+  <app-kpi-card
+    label="Jours sur site"
+    [value]="stats().onsiteDays"
+    unit="j"
+    [accent]="types.onsite.color"
+    [hint]="onsiteHint()"
+  />
+  <app-kpi-card
+    label="Jours en télétravail"
+    [value]="stats().remoteDays"
+    unit="j"
+    [accent]="types.remote.color"
+  />
+  <app-kpi-card label="Congés" [value]="stats().leaveDays" unit="j" [accent]="types.leave.color" />
+  <app-kpi-card
+    label="Jours fériés"
+    [value]="stats().holidayDays"
+    unit="j"
+    [accent]="types.holiday.color"
+    hint="Calculés automatiquement"
+  />
+</div>
+
+<h2 class="section-title">Trajets et coûts</h2>
+<div class="kpi-grid">
+  <app-kpi-card
+    label="Kilomètres parcourus"
+    [value]="stats().km | number: '1.0-0'"
+    unit="km"
+    [hint]="kmPerTripHint()"
+  />
+  <app-kpi-card
+    label="Kilomètres par mois"
+    [value]="stats().kmPerMonth | number: '1.0-0'"
+    unit="km"
+    hint="Moyenne sur les mois avec activité"
+  />
+  <app-kpi-card
+    label="Total des péages"
+    [value]="stats().toll | number: '1.2-2'"
+    unit="€"
+    [hint]="tollPerTripHint()"
+  />
+  <app-kpi-card
+    label="Péages par mois"
+    [value]="stats().tollPerMonth | number: '1.2-2'"
+    unit="€"
+    hint="Moyenne sur les mois avec activité"
+  />
+</div>
+
+<h2 class="section-title">Déclaration fiscale</h2>
+<section class="tax card">
+  <div class="tax__formula">
+    <p class="faint">Barème appliqué</p>
+    <p class="tax__expr">
+      ({{ stats().km | number: '1.0-0' }}&nbsp;km × {{ settings().taxRatePerKm | number: '1.0-3' }})
+      +
+      {{ settings().taxFixedAmount | number: '1.0-0' }}
+    </p>
+    <dl class="tax__lines">
+      <div>
+        <dt>Frais kilométriques</dt>
+        <dd>{{ stats().taxDeduction | number: '1.2-2' }} €</dd>
+      </div>
+      <div>
+        <dt>Péages de l’année</dt>
+        <dd>{{ stats().toll | number: '1.2-2' }} €</dd>
+      </div>
+    </dl>
+  </div>
+  <div class="tax__total">
+    <p class="faint">Montant total à déclarer</p>
+    <strong>{{ stats().totalDeclared | number: '1.2-2' }} €</strong>
+    <a class="tax__link" routerLink="/reglages">Ajuster le barème</a>
+  </div>
+</section>
+
+<h2 class="section-title">Évolution mensuelle</h2>
+<div class="chart-grid">
+  <section class="card">
+    <h3 class="card__title">Kilomètres <span>par mois</span></h3>
+    <app-bar-chart
+      [categories]="months"
+      [series]="kmSeries()"
+      unit="km"
+      caption="Kilomètres parcourus par mois"
+    />
+  </section>
+
+  <section class="card">
+    <h3 class="card__title">Péages <span>par mois, en €</span></h3>
+    <app-bar-chart
+      [categories]="months"
+      [series]="tollSeries()"
+      unit="€"
+      caption="Coût des péages par mois"
+    />
+  </section>
+
+  <section class="card">
+    <h3 class="card__title">Nature des journées <span>par mois</span></h3>
+    <app-bar-chart
+      [categories]="months"
+      [series]="dayTypeSeries()"
+      [stacked]="true"
+      unit="j"
+      caption="Répartition des journées par mois"
+    />
+  </section>
+
+  <section class="card">
+    <h3 class="card__title">Répartition de l’année <span>hors week-ends</span></h3>
+    <app-donut-chart [slices]="breakdown()" centerLabel="jours" />
+  </section>
+</div>

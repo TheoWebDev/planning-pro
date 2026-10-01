@@ -1,0 +1,210 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.5rem 0.9rem;
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1280px;
+  min-height: 56px;
+  margin: 0 auto;
+  padding: 0.5rem clamp(0.75rem, 3vw, 2rem) 0;
+}
+
+/* ------------------------------------------------------------------- brand */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text);
+  min-width: 0;
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 9px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.brand__text strong {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.brand__text small {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* -------------------------------------------------------------------- année */
+
+.year {
+  display: flex;
+  align-items: center;
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.year__step {
+  width: 32px;
+  height: 34px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.year__step:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.year__select {
+  width: auto;
+  padding: 0 0.2rem;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  text-align-last: center;
+}
+
+.year__select:focus {
+  outline-offset: -2px;
+}
+
+/* --------------------------------------------------------------- navigation */
+
+.tabs {
+  display: flex;
+  gap: 0.15rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.35rem clamp(0.75rem, 3vw, 2rem) 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab--active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.tab__icon {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+
+.tab__label-short {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ contenu */
+
+.content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(1rem, 2.5vw, 1.75rem) clamp(0.75rem, 3vw, 2rem) 3rem;
+}
+
+@media (max-width: 620px) {
+  .brand__text small {
+    display: none;
+  }
+
+  /* Libellés courts et sans icône : les quatre onglets tiennent sans défilement. */
+  .tab__icon,
+  .tab__label {
+    display: none;
+  }
+
+  .tab__label-short {
+    display: inline;
+  }
+
+  .tab {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 0.5rem 0.4rem;
+  }
+}

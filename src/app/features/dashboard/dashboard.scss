@@ -1,0 +1,128 @@
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.page-head h1 {
+  font-size: clamp(1.25rem, 1rem + 1.2vw, 1.65rem);
+}
+
+.page-head p {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.hint-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+  padding: 1.1rem 1.25rem;
+  background: linear-gradient(140deg, var(--accent-soft), var(--surface) 65%);
+  border: 1px solid #3b4a7a;
+  border-radius: var(--radius);
+}
+
+.hint-card p {
+  max-width: 62ch;
+  font-size: 0.88rem;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+/* ------------------------------------------------------------------- impôts */
+
+.tax {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.tax__formula p.faint {
+  font-size: 0.78rem;
+}
+
+.tax__expr {
+  margin-top: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  color: var(--accent-text);
+}
+
+.tax__lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin: 1rem 0 0;
+}
+
+.tax__lines dt {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.tax__lines dd {
+  margin: 0.1rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tax__total {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.tax__total p {
+  font-size: 0.78rem;
+}
+
+.tax__total strong {
+  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.tax__link {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+}
+
+/* --------------------------------------------------------------- graphiques */
+
+/* Deux colonnes dès que la place le permet : les quatre graphiques forment une grille 2 × 2. */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .chart-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .tax {
+    grid-template-columns: 1fr;
+  }
+}

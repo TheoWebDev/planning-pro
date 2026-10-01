@@ -1,0 +1,106 @@
+<div class="page-head">
+  <div>
+    <h1>Récapitulatif {{ year() }}</h1>
+    <p class="muted">Détail mois par mois, totaux annuels et montants à déclarer.</p>
+  </div>
+  <div class="page-head__actions">
+    <button type="button" class="btn" (click)="exporter.downloadDaysCsv()">
+      Détail journalier (CSV)
+    </button>
+    <button type="button" class="btn btn--primary" (click)="exporter.downloadSummaryCsv()">
+      Exporter le récapitulatif
+    </button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="data">
+    <caption class="sr-only">
+      Récapitulatif mensuel
+      {{
+        year()
+      }}
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Mois</th>
+        <th scope="col">Travaillés</th>
+        <th scope="col">Sur site</th>
+        <th scope="col">Télétravail</th>
+        <th scope="col">Congés</th>
+        <th scope="col">Fériés</th>
+        <th scope="col">Kilomètres</th>
+        <th scope="col">Péages</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (month of stats().months; track month.month) {
+        <tr>
+          <th scope="row">{{ monthLabels[month.month] }}</th>
+          <td>{{ month.workedDays }}</td>
+          <td>{{ month.onsiteDays }}</td>
+          <td>{{ month.remoteDays }}</td>
+          <td>{{ month.leaveDays }}</td>
+          <td>{{ month.holidayDays }}</td>
+          <td>{{ month.km | number: '1.0-0' }}</td>
+          <td>{{ month.toll | number: '1.2-2' }} €</td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Total {{ year() }}</td>
+        <td>{{ stats().workedDays }}</td>
+        <td>{{ stats().onsiteDays }}</td>
+        <td>{{ stats().remoteDays }}</td>
+        <td>{{ stats().leaveDays }}</td>
+        <td>{{ stats().holidayDays }}</td>
+        <td>{{ stats().km | number: '1.0-0' }}</td>
+        <td>{{ stats().toll | number: '1.2-2' }} €</td>
+      </tr>
+      <tr class="secondary">
+        <td>Moyenne mensuelle</td>
+        <td colspan="5"></td>
+        <td>{{ stats().kmPerMonth | number: '1.0-0' }}</td>
+        <td>{{ stats().tollPerMonth | number: '1.2-2' }} €</td>
+      </tr>
+      <tr class="secondary">
+        <td>Moyenne par trajet</td>
+        <td colspan="5"></td>
+        <td>{{ stats().kmPerTrip | number: '1.0-1' }}</td>
+        <td>{{ stats().tollPerTrip | number: '1.2-2' }} €</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<h2 class="section-title">Montant à déclarer aux impôts</h2>
+<section class="card declaration">
+  <ol class="declaration__steps">
+    <li>
+      <span class="declaration__label">Kilomètres professionnels {{ year() }}</span>
+      <span class="declaration__value">{{ stats().km | number: '1.0-0' }} km</span>
+    </li>
+    <li>
+      <span class="declaration__label">
+        Barème kilométrique
+        <small class="faint">
+          ({{ stats().km | number: '1.0-0' }} × {{ settings().taxRatePerKm | number: '1.0-3' }}) +
+          {{ settings().taxFixedAmount | number: '1.0-0' }}
+        </small>
+      </span>
+      <span class="declaration__value">{{ stats().taxDeduction | number: '1.2-2' }} €</span>
+    </li>
+    <li>
+      <span class="declaration__label">
+        Péages de l’année
+        <small class="faint">{{ stats().onsiteDays }} trajets</small>
+      </span>
+      <span class="declaration__value">{{ stats().toll | number: '1.2-2' }} €</span>
+    </li>
+    <li class="declaration__steps--total">
+      <span class="declaration__label">Montant total</span>
+      <span class="declaration__value">{{ stats().totalDeclared | number: '1.2-2' }} €</span>
+    </li>
+  </ol>
+</section>
