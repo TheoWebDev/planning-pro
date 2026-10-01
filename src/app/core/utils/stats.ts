@@ -32,6 +32,8 @@ export interface YearStats extends PeriodStats {
   readonly kmPerTrip: number;
   /** Part des jours travaillés passés sur site, en pourcentage. */
   readonly onsiteShare: number;
+  /** Part des jours travaillés passés en télétravail, en pourcentage. */
+  readonly remoteShare: number;
   /** Barème kilométrique : (km × taux) + forfait. */
   readonly taxDeduction: number;
   /** Déduction kilométrique + péages de l'année. */
@@ -118,6 +120,7 @@ export function computeYearStats(
     tollPerTrip: total.onsiteDays ? round(total.toll / total.onsiteDays, 2) : 0,
     kmPerTrip: total.onsiteDays ? round(total.km / total.onsiteDays, 2) : 0,
     onsiteShare: total.workedDays ? round((total.onsiteDays / total.workedDays) * 100, 1) : 0,
+    remoteShare: total.workedDays ? round((total.remoteDays / total.workedDays) * 100, 1) : 0,
     taxDeduction,
     totalDeclared: round(taxDeduction + total.toll, 2),
     fuelLiters: fuelLitersFor(total.km, settings),

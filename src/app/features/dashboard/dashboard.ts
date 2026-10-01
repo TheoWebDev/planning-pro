@@ -29,6 +29,9 @@ export class Dashboard {
   protected readonly onsiteHint = computed(
     () => `${formatNumber(this.stats().onsiteShare, 0, 1)} % des jours travaillés`,
   );
+  protected readonly remoteHint = computed(
+    () => `${formatNumber(this.stats().remoteShare, 0, 1)} % des jours travaillés`,
+  );
   protected readonly kmPerMonthHint = computed(
     () => `${formatNumber(this.stats().kmPerMonth, 0)} km / mois`,
   );

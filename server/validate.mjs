@@ -28,6 +28,7 @@ export function validateState(input) {
     const value = settings[key];
     if (
       value !== undefined &&
+      value !== null &&
       (typeof value !== 'number' || !Number.isFinite(value) || value < 0)
     ) {
       return { ok: false, error: `Réglage invalide : ${key}.` };

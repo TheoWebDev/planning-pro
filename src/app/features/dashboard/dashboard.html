@@ -37,6 +37,7 @@
     [value]="stats().remoteDays"
     unit="j"
     [accent]="types.remote.color"
+    [hint]="remoteHint()"
   />
   <app-kpi-card label="Congés" [value]="stats().leaveDays" unit="j" [accent]="types.leave.color" />
 </div>

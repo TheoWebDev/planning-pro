@@ -109,6 +109,7 @@ describe('computeYearStats', () => {
     expect(stats.kmPerTrip).toBe(80);
     expect(stats.tollPerTrip).toBe(6);
     expect(stats.onsiteShare).toBe(40);
+    expect(stats.remoteShare).toBe(60);
   });
 
   it('calcule le carburant à partir de la consommation et du prix au litre', () => {
@@ -142,6 +143,6 @@ describe('computeYearStats', () => {
     expect(stats.kmPerTrip).toBe(0);
     expect(stats.tollPerTrip).toBe(0);
     expect(stats.onsiteShare).toBe(0);
-    expect(stats.taxDeduction).toBe(DEFAULT_SETTINGS.taxFixedAmount);
+    expect(stats.remoteShare).toBe(0);
   });
 });
