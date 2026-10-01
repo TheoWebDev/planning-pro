@@ -46,11 +46,15 @@ totaux, moyennes et graphiques recalculés en temps réel.
 | Chargement | Une route = un chunk différé (`loadComponent`)                                     |
 | Graphiques | SVG écrit à la main, `ResizeObserver` — aucune librairie de dataviz                |
 | Styles     | SCSS et variables CSS, thème sombre, zéro dépendance UI                            |
-| Tests      | Vitest, 37 tests sur la logique métier                                             |
+| Tests      | Vitest, 48 tests sur la logique métier                                             |
 
 Le modèle de données ne stocke que les journées qui s'écartent du calendrier déduit. Deux
 conséquences utiles : les données restent très compactes, et modifier une valeur par défaut (distance,
-péage, barème) se répercute immédiatement sur tout l'historique non surchargé.
+barème) se répercute immédiatement sur tout l'historique non surchargé.
+
+Le péage échappe volontairement à cette règle : il est saisi sous forme de tarifs datés
+(« à partir du 1er février 2027, 9,40 € »). Une hausse n'est appliquée qu'aux journées postérieures
+à sa date d'effet, pour que les années déjà déclarées restent intactes.
 
 ## Démarrage
 

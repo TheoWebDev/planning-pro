@@ -108,6 +108,78 @@ describe('PlanningStore', () => {
     });
   });
 
+  describe('barème de péage', () => {
+    it('applique le tarif en vigueur à la date de la journée', () => {
+      store.updateSettings({
+        tollRates: [
+          { from: '2020-01-01', amount: 6 },
+          { from: '2026-07-01', amount: 9 },
+        ],
+      });
+      store.setDay('2026-06-30', { type: 'onsite' });
+      store.setDay('2026-07-01', { type: 'onsite' });
+
+      expect(store.resolve('2026-06-30').toll).toBe(6);
+      expect(store.resolve('2026-07-01').toll).toBe(9);
+    });
+
+    it('laisse le tarif le plus ancien couvrir les journées antérieures', () => {
+      store.updateSettings({ tollRates: [{ from: '2026-07-01', amount: 9 }] });
+      store.setDay('2024-03-04', { type: 'onsite' });
+
+      expect(store.resolve('2024-03-04').toll).toBe(9);
+    });
+
+    it('n’altère pas une année déjà déclarée quand un tarif plus récent arrive', () => {
+      store.updateSettings({ tollRates: [{ from: '2020-01-01', amount: 6 }] });
+      store.applyWeeklyPattern([0], 'onsite', {
+        skipNonWorkingDays: true,
+        keepExistingEntries: false,
+      });
+      const declared = store.yearStats().toll;
+
+      store.updateSettings({
+        tollRates: [
+          { from: '2020-01-01', amount: 6 },
+          { from: '2027-02-01', amount: 9 },
+        ],
+      });
+
+      expect(store.yearStats().toll).toBe(declared);
+    });
+
+    it('trie les tarifs et ne garde qu’un montant par date', () => {
+      store.updateSettings({
+        tollRates: [
+          { from: '2026-07-01', amount: 9 },
+          { from: '2020-01-01', amount: 6 },
+          { from: '2026-07-01', amount: 9.4 },
+        ],
+      });
+
+      expect(store.settings().tollRates).toEqual([
+        { from: '2020-01-01', amount: 6 },
+        { from: '2026-07-01', amount: 9.4 },
+      ]);
+    });
+
+    it('migre une sauvegarde à tarif unique sans changer les montants', () => {
+      store.importState(
+        JSON.stringify({
+          version: 1,
+          settings: { ...DEFAULT_SETTINGS, tollRates: undefined, defaultToll: 9 },
+          days: { '2024-03-04': { type: 'onsite' } },
+          selectedYear: 2024,
+        }),
+      );
+
+      expect(store.settings().tollRates).toEqual([
+        { from: DEFAULT_SETTINGS.tollRates[0].from, amount: 9 },
+      ]);
+      expect(store.resolve('2024-03-04').toll).toBe(9);
+    });
+  });
+
   describe('remplissage de masse', () => {
     const options = { skipNonWorkingDays: true, keepExistingEntries: false };
 
@@ -165,7 +237,7 @@ describe('PlanningStore', () => {
     });
 
     it('chaîne kilomètres, péages et montant à déclarer', () => {
-      store.updateSettings({ defaultKm: 80, defaultToll: 6 });
+      store.updateSettings({ defaultKm: 80, tollRates: [{ from: '2020-01-01', amount: 6 }] });
       store.applyWeeklyPattern([0, 3], 'onsite', {
         skipNonWorkingDays: true,
         keepExistingEntries: false,

@@ -13,10 +13,13 @@ let app;
 let baseUrl;
 
 const sample = {
-  version: 1,
+  version: 2,
   settings: {
     defaultKm: 80,
-    defaultToll: 6,
+    tollRates: [
+      { from: '2020-01-01', amount: 6 },
+      { from: '2027-02-01', amount: 9.4 },
+    ],
     defaultWeekdayType: 'remote',
     taxRatePerKm: 0.394,
     taxFixedAmount: 1515,
@@ -59,7 +62,7 @@ test('refuse un état invalide sans écraser la base', async () => {
   const rejected = await fetch(`${baseUrl}/api/state`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ version: 1, days: {} }),
+    body: JSON.stringify({ version: 2, days: {} }),
   });
   assert.equal(rejected.status, 400);
 

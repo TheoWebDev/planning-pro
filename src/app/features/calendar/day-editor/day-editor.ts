@@ -29,6 +29,8 @@ export class DayEditor {
 
   protected readonly day = computed(() => this.store.resolve(this.iso()));
   protected readonly title = computed(() => formatLongDate(this.iso()));
+  /** Péage du barème à cette date, affiché comme valeur de repli. */
+  protected readonly defaultToll = computed(() => this.store.tollRateAt(this.iso()));
 
   protected setType(type: DayType): void {
     this.store.setDay(this.iso(), { type });

@@ -38,6 +38,24 @@
   margin-top: 0.9rem;
 }
 
+.rates {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  list-style: none;
+}
+
+.rates__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.rates__remove {
+  padding-inline: 0.6rem;
+}
+
 .preview {
   display: flex;
   flex-direction: column;

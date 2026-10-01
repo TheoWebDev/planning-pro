@@ -14,29 +14,16 @@
       Valeurs appliquées à chaque journée sur site. Une journée peut toujours être ajustée
       individuellement depuis le calendrier.
     </p>
-    <div class="grid-2">
-      <div class="field">
-        <label for="default-km">Distance aller-retour (km)</label>
-        <input
-          id="default-km"
-          type="number"
-          min="0"
-          step="1"
-          [value]="settings().defaultKm"
-          (input)="updateNumber('defaultKm', $any($event.target).value)"
-        />
-      </div>
-      <div class="field">
-        <label for="default-toll">Péage aller-retour (€)</label>
-        <input
-          id="default-toll"
-          type="number"
-          min="0"
-          step="0.01"
-          [value]="settings().defaultToll"
-          (input)="updateNumber('defaultToll', $any($event.target).value)"
-        />
-      </div>
+    <div class="field">
+      <label for="default-km">Distance aller-retour (km)</label>
+      <input
+        id="default-km"
+        type="number"
+        min="0"
+        step="1"
+        [value]="settings().defaultKm"
+        (input)="updateNumber('defaultKm', $any($event.target).value)"
+      />
     </div>
     <div class="field">
       <label for="default-weekday">Nature des jours ouvrés non saisis</label>
@@ -52,6 +39,62 @@
         Les week-ends et les 11 jours fériés français sont déduits automatiquement du calendrier.
       </span>
     </div>
+  </section>
+
+  <section class="card">
+    <h2 class="card__title">Péage</h2>
+    <p class="field__hint">
+      Chaque tarif s'applique aux journées sur site à partir de sa date d'effet, jusqu'au tarif
+      suivant. Ajoutez une ligne quand le péage augmente : les années précédentes gardent leur
+      montant.
+    </p>
+    <ul class="rates">
+      @for (rate of tollRates(); track rate.from; let index = $index) {
+        <li class="rates__row">
+          <div class="field">
+            <label [attr.for]="'toll-from-' + index">
+              {{ index === 0 ? 'Jusqu’au tarif suivant' : 'À partir du' }}
+            </label>
+            <input
+              [id]="'toll-from-' + index"
+              type="date"
+              [value]="rate.from"
+              (change)="updateTollFrom(index, $any($event.target).value)"
+            />
+          </div>
+          <div class="field">
+            <label [attr.for]="'toll-amount-' + index">Péage aller-retour (€)</label>
+            <input
+              [id]="'toll-amount-' + index"
+              type="number"
+              min="0"
+              step="0.01"
+              [value]="rate.amount"
+              (input)="updateTollAmount(index, $any($event.target).value)"
+            />
+          </div>
+          <button
+            type="button"
+            class="btn btn--sm btn--danger rates__remove"
+            [disabled]="tollRates().length === 1"
+            [attr.aria-label]="'Supprimer le tarif du ' + rate.from"
+            (click)="removeTollRate(index)"
+          >
+            ✕
+          </button>
+        </li>
+      }
+    </ul>
+    <p class="preview">
+      <span class="faint">Le tarif le plus ancien couvre aussi les journées qui le précèdent.</span>
+      <code>
+        {{ year() }} : {{ stats().onsiteDays }} trajets = {{ stats().toll | number: '1.2-2' }} € de
+        péages
+      </code>
+    </p>
+    <button type="button" class="btn btn--sm" (click)="addTollRate()">
+      Ajouter un changement de tarif
+    </button>
   </section>
 
   <section class="card">

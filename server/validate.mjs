@@ -1,6 +1,6 @@
 const VALID_TYPES = new Set(['onsite', 'remote', 'leave', 'holiday', 'weekend', 'other']);
 const ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const SETTING_KEYS = ['defaultKm', 'defaultToll', 'taxRatePerKm', 'taxFixedAmount'];
+const SETTING_KEYS = ['defaultKm', 'taxRatePerKm', 'taxFixedAmount'];
 
 /** Refuse un corps qui ne ressemble pas à un état Planning Pro, sans le réécrire. */
 export function validateState(input) {
@@ -8,7 +8,7 @@ export function validateState(input) {
     return { ok: false, error: 'Objet JSON attendu.' };
   }
 
-  if (input.version !== 1) {
+  if (input.version !== 2) {
     return { ok: false, error: 'Version inconnue.' };
   }
 
@@ -24,6 +24,21 @@ export function validateState(input) {
   }
   if (settings.defaultWeekdayType !== 'onsite' && settings.defaultWeekdayType !== 'remote') {
     return { ok: false, error: 'Type de jour ouvré invalide.' };
+  }
+  if (!Array.isArray(settings.tollRates) || settings.tollRates.length === 0) {
+    return { ok: false, error: 'Barème de péage manquant.' };
+  }
+  for (const rate of settings.tollRates) {
+    if (
+      typeof rate !== 'object' ||
+      rate === null ||
+      !ISO_PATTERN.test(rate.from) ||
+      typeof rate.amount !== 'number' ||
+      !Number.isFinite(rate.amount) ||
+      rate.amount < 0
+    ) {
+      return { ok: false, error: 'Tarif de péage invalide.' };
+    }
   }
 
   if (typeof input.days !== 'object' || input.days === null || Array.isArray(input.days)) {

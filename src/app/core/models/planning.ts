@@ -90,11 +90,23 @@ export interface DayEntry {
   readonly note?: string;
 }
 
+/** Tarif de péage aller-retour entrant en vigueur à une date donnée. */
+export interface TollRate {
+  /** Date ISO (yyyy-MM-dd) à partir de laquelle le montant s'applique. */
+  readonly from: string;
+  /** Péage aller-retour, en euros. */
+  readonly amount: number;
+}
+
 export interface PlanningSettings {
   /** Distance aller-retour par défaut d'un jour sur site. */
   readonly defaultKm: number;
-  /** Péage aller-retour par défaut d'un jour sur site. */
-  readonly defaultToll: number;
+  /**
+   * Péages aller-retour par date d'entrée en vigueur, triés par date croissante
+   * et jamais vides. Garder l'historique évite qu'une hausse de tarif ne
+   * recalcule les années déjà déclarées.
+   */
+  readonly tollRates: readonly TollRate[];
   /** Nature appliquée aux jours ouvrés non saisis. */
   readonly defaultWeekdayType: 'remote' | 'onsite';
   /** Barème kilométrique : montant par km. */
@@ -105,13 +117,29 @@ export interface PlanningSettings {
 
 export const DEFAULT_SETTINGS: PlanningSettings = {
   defaultKm: 80,
-  defaultToll: 6,
+  tollRates: [{ from: '2020-01-01', amount: 6 }],
   defaultWeekdayType: 'remote',
   taxRatePerKm: 0.394,
   taxFixedAmount: 1515,
 };
 
-export const STATE_VERSION = 1;
+/**
+ * Péage en vigueur à une date. Le tarif le plus ancien couvre aussi les
+ * journées qui précèdent sa date d'effet, pour qu'aucune journée ne reste sans
+ * montant.
+ */
+export function tollRateFor(iso: string, rates: readonly TollRate[]): number {
+  let amount = rates.length ? rates[0].amount : 0;
+  for (const rate of rates) {
+    if (rate.from > iso) {
+      break;
+    }
+    amount = rate.amount;
+  }
+  return amount;
+}
+
+export const STATE_VERSION = 2;
 
 export interface PlanningState {
   readonly version: number;

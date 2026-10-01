@@ -2,11 +2,13 @@ import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import {
   DEFAULT_SETTINGS,
   STATE_VERSION,
+  tollRateFor,
   type DayEntry,
   type DayType,
   type PlanningSettings,
   type PlanningState,
   type ResolvedDay,
+  type TollRate,
 } from '../models/planning';
 import { fromIso, isoListBetween, isoListOfMonth, toIso, weekdayIndex } from '../utils/date';
 import { frenchHolidays } from '../utils/holidays';
@@ -214,7 +216,18 @@ export class PlanningStore {
   // ------------------------------------------------------------------ réglages
 
   updateSettings(patch: Partial<PlanningSettings>): void {
-    this.state.update((state) => ({ ...state, settings: { ...state.settings, ...patch } }));
+    this.state.update((state) => {
+      const settings: PlanningSettings = { ...state.settings, ...patch };
+      return {
+        ...state,
+        settings: { ...settings, tollRates: normalizeTollRates(settings.tollRates) },
+      };
+    });
+  }
+
+  /** Péage par défaut d'une date, hors surcharge de la journée. */
+  tollRateAt(iso: string): number {
+    return tollRateFor(iso, this.settings().tollRates);
   }
 
   // -------------------------------------------------------------------- données
@@ -349,7 +362,7 @@ function resolveDay(
     weekday,
     type,
     km: commutes ? (entry?.km ?? settings.defaultKm) : 0,
-    toll: commutes ? (entry?.toll ?? settings.defaultToll) : 0,
+    toll: commutes ? (entry?.toll ?? tollRateFor(iso, settings.tollRates)) : 0,
     note: entry?.note ?? '',
     holidayName,
     isOverridden: entry !== undefined,
@@ -396,7 +409,7 @@ function normalizeState(input: unknown): PlanningState {
 
   const settings: PlanningSettings = {
     defaultKm: positiveNumber(readProp(raw.settings, 'defaultKm'), base.settings.defaultKm),
-    defaultToll: positiveNumber(readProp(raw.settings, 'defaultToll'), base.settings.defaultToll),
+    tollRates: readTollRates(raw.settings, base.settings.tollRates),
     defaultWeekdayType:
       readProp(raw.settings, 'defaultWeekdayType') === 'onsite' ? 'onsite' : 'remote',
     taxRatePerKm: positiveNumber(
@@ -436,6 +449,45 @@ function normalizeState(input: unknown): PlanningState {
     days,
     selectedYear: Number.isInteger(year) && year >= 1970 && year <= 2200 ? year : base.selectedYear,
   };
+}
+
+/**
+ * Lit le barème de péage d'un état externe. Les sauvegardes antérieures ne
+ * connaissent qu'un tarif unique (`defaultToll`) : il devient le tarif le plus
+ * ancien, donc les totaux déjà calculés restent identiques.
+ */
+function readTollRates(source: unknown, fallback: readonly TollRate[]): readonly TollRate[] {
+  const raw = readProp(source, 'tollRates');
+  if (Array.isArray(raw)) {
+    return normalizeTollRates(
+      raw.map((item) => ({
+        from: String(readProp(item, 'from')),
+        amount: Number(readProp(item, 'amount')),
+      })),
+      fallback,
+    );
+  }
+  const legacy = optionalNumber(readProp(source, 'defaultToll'));
+  return legacy === undefined ? fallback : [{ from: fallback[0].from, amount: legacy }];
+}
+
+/** Trie par date, écarte les tarifs invalides et ne garde qu'un montant par date. */
+function normalizeTollRates(
+  rates: readonly TollRate[],
+  fallback: readonly TollRate[] = DEFAULT_SETTINGS.tollRates,
+): readonly TollRate[] {
+  const amountByDate = new Map<string, number>();
+  for (const rate of rates) {
+    if (ISO_PATTERN.test(rate.from) && Number.isFinite(rate.amount) && rate.amount >= 0) {
+      amountByDate.set(rate.from, rate.amount);
+    }
+  }
+  if (amountByDate.size === 0) {
+    return fallback;
+  }
+  return [...amountByDate]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([from, amount]) => ({ from, amount }));
 }
 
 function readProp(source: unknown, key: string): unknown {
